@@ -9,6 +9,8 @@ import beast.base.evolution.tree.Tree;
 import beast.base.evolution.tree.TreeInterface;
 import beast.base.evolution.tree.TreeParser;
 import beast.base.inference.parameter.RealParameter;
+import calibratedcpp.BirthDeathCoalescentDistribution;
+import calibratedcpp.CoalescentDistribution;
 
 import java.util.ArrayList;
 import java.util.List;
