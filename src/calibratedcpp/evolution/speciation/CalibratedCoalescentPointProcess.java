@@ -153,8 +153,8 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         BirthDeathCoalescentDistribution birthDeath = new BirthDeathCoalescentDistribution();
 
-        birthDeath.initByName("reproductiveNumber", new RealParameter("1.0"),
-                "diversificationRate", new RealParameter("1.0"),
+        birthDeath.initByName("deathRate", new RealParameter("0.0"),
+                "diversificationRate", new RealParameter("2.0"),
                 "rho", new RealParameter("0.1")
         );
 
