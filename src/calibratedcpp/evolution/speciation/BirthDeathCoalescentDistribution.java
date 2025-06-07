@@ -1,15 +1,21 @@
 package calibratedcpp.evolution.speciation;
 
+import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.inference.parameter.RealParameter;
 
-public class BirthDeathCoalescentDensity extends CoalescentDensity {
-    Input<RealParameter> birthRateInput =
-            new Input<>("birthRate","the birth rate",(RealParameter)null);
-    Input<RealParameter> deathRateInput =
-            new Input<>("deathRate","the death rate",(RealParameter)null);
-    Input<RealParameter> rhoInput =
-            new Input<>("rho","Probability with which each individual in the population is sampled",(RealParameter)null);
+/**
+ * @author Marcus Overwater
+ */
+
+@Description("Node age distribution for the CPP representation of the birth-death process")
+public class BirthDeathCoalescentDistribution extends CoalescentDistribution {
+    public Input<RealParameter> birthRateInput =
+            new Input<RealParameter>("birthRate","the birth rate",(RealParameter)null);
+    public Input<RealParameter> deathRateInput =
+            new Input<RealParameter>("deathRate","the death rate",(RealParameter)null);
+    public Input<RealParameter> rhoInput =
+            new Input<RealParameter>("rho","Probability with which each individual in the population is sampled",(RealParameter)null);
 
     protected Double birthRate;
     protected Double deathRate;
@@ -32,8 +38,6 @@ public class BirthDeathCoalescentDensity extends CoalescentDensity {
         logDeathRate = Math.log(deathRate);
         logRho = Math.log(rho);
         logDiversificationRate = Math.log(diversificationRate);
-
-        super.initAndValidate();
     }
 
     @Override
