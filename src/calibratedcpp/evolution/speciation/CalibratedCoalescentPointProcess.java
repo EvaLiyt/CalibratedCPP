@@ -8,7 +8,6 @@ import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
 import beast.base.evolution.tree.TreeInterface;
 import beast.base.evolution.tree.TreeParser;
-import beast.base.inference.Distribution;
 import beast.base.inference.parameter.RealParameter;
 
 import java.util.ArrayList;
@@ -26,9 +25,9 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     public Input<RealParameter> rootInput =
             new Input<RealParameter>("rootAge","Age of the root",(RealParameter) null);
     public Input<CoalescentDistribution> coalescentDensityInput =
-            new Input<CoalescentDistribution>("model", "coalescentDensity", Distribution.class);
+            new Input<CoalescentDistribution>("treeModel", "coalescentDensity", (CoalescentDistribution) null);
     public Input<List<CalibrationPoint>> calibrationsInput =
-            new Input<List<CalibrationPoint>>("calibrations","Clade calibrations", CalibrationPoint.class);
+            new Input<List<CalibrationPoint>>("calibrations","Clade calibrations", (List<CalibrationPoint>) null);
     public Input<Boolean> conditionOnRootInput =
             new Input<Boolean>("conditionOnRoot","Condition on the root age", false);
 
@@ -44,11 +43,15 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     public void initAndValidate() {
         q = coalescentDensityInput.get();
         origin = originInput.get().getValue();
-        rootAge = rootInput.get().getValue();
         calibrations = calibrationsInput.get();
         conditionOnRoot = conditionOnRootInput.get();
         tree = treeInput.get();
-        maxTime = conditionOnRoot ? rootAge : origin;
+        maxTime = origin;
+
+        if (conditionOnRoot) {
+            rootAge = rootInput.get().getValue();
+            maxTime = rootAge;
+        }
 
         super.initAndValidate();
     }
@@ -69,7 +72,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         return logP;
     }
 
-    public double calculateLogMarginalDensityOfCalibrations(List<CalibrationPoint> calibrations) {
+    public double calculateLogMarginalDensityOfCalibrations() {
         double marginalDensity = Math.log1p(-Math.exp(q.calculateLogCDF(maxTime)));
 
         if (conditionOnRoot)
@@ -86,7 +89,12 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
     @Override
     public double calculateTreeLogLikelihood(TreeInterface tree) {
-        logP = calculateUnConditionedTreeLogLikelihood(tree) - calculateLogMarginalDensityOfCalibrations(calibrations);
+        logP = calculateUnConditionedTreeLogLikelihood(tree);
+
+        if (calibrations!=null) {
+            logP -= calculateLogMarginalDensityOfCalibrations();
+        }
+
         return logP;
     }
 
@@ -137,7 +145,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
     public static void main(String[] args){
         Tree tree = new TreeParser();
-        tree.initByName("newick", "((A:1,B:2):1,C:1):0;",
+        tree.initByName("newick", "((A:2,B:2):1,C:3):0;",
                 "adjustTipHeights", false,
                 "IsLabelledNewick", true);
 
@@ -155,6 +163,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
                 );
 
         System.out.println(tree);
-        System.out.println("logP=" + cpp.logP);
+        System.out.println("logP=" + cpp.calculateLogP());
+        System.out.println("origin=" + cpp.origin);
     }
 }
