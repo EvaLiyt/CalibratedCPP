@@ -84,6 +84,8 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
             marginalDensity += q.calculateLogDensity(calibrationAge) + (calibrationSize - 2) * q.calculateLogCDF(calibrationAge);
         }
 
+//        TODO implement sum of permutations
+
         return marginalDensity;
     }
 
@@ -151,19 +153,18 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         BirthDeathCoalescentDistribution birthDeath = new BirthDeathCoalescentDistribution();
 
-        birthDeath.initByName("birthRate", new RealParameter("2.0"),
-                "deathRate", new RealParameter("1.0"),
+        birthDeath.initByName("reproductiveNumber", new RealParameter("1.0"),
+                "diversificationRate", new RealParameter("1.0"),
                 "rho", new RealParameter("0.1")
         );
 
         CalibratedCoalescentPointProcess cpp = new CalibratedCoalescentPointProcess();
         cpp.initByName("tree", tree,
-                "model", birthDeath,
+                "treeModel", birthDeath,
                 "origin", new RealParameter("5.0")
                 );
 
         System.out.println(tree);
         System.out.println("logP=" + cpp.calculateLogP());
-        System.out.println("origin=" + cpp.origin);
     }
 }
