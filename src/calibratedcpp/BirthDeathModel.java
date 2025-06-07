@@ -9,7 +9,7 @@ import beast.base.inference.parameter.RealParameter;
  */
 
 @Description("Node age distribution for the CPP representation of the birth-death process")
-public class BirthDeathCoalescentDistribution extends CoalescentDistribution {
+public class BirthDeathModel extends CoalescentPointProcessModel {
     public Input<RealParameter> birthRateInput =
             new Input<RealParameter>("birthRate","the birth rate", (RealParameter) null);
 
@@ -28,17 +28,17 @@ public class BirthDeathCoalescentDistribution extends CoalescentDistribution {
     public Input<RealParameter> rhoInput =
             new Input<RealParameter>("rho","Probability with which each individual in the population is sampled",(RealParameter)null);
 
-    protected Double birthRate;
-    protected Double deathRate;
-    protected Double diversificationRate;
-    protected Double reproductiveNumber;
-    protected Double turnover;
-    protected Double rho;
+    protected double birthRate;
+    protected double deathRate;
+    protected double diversificationRate;
+    protected double reproductiveNumber;
+    protected double turnover;
+    protected double rho;
 
-    protected Double logBirthRate;
-    protected Double logDeathRate;
-    protected Double logRho;
-    protected Double logDiversificationRate;
+    protected double logBirthRate;
+    protected double logDeathRate;
+    protected double logRho;
+    protected double logDiversificationRate;
 
     @Override
     public void initAndValidate() {
@@ -99,8 +99,6 @@ public class BirthDeathCoalescentDistribution extends CoalescentDistribution {
         }
 
         diversificationRate = birthRate - deathRate;
-        reproductiveNumber = birthRate / deathRate;
-        turnover = deathRate / birthRate;
 
         logBirthRate = Math.log(birthRate);
         logDeathRate = Math.log(deathRate);

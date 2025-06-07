@@ -1,0 +1,32 @@
+package calibratedcpp;
+
+import beast.base.core.Input;
+import beast.base.inference.Distribution;
+import beast.base.inference.parameter.RealParameter;
+
+public class AgeDependentModel extends CoalescentPointProcessModel {
+    public Input<Distribution> lifetimeDistributionInput =
+            new Input<Distribution>("lifetimeDistribution","distribution of the lifetime of an individual",(Distribution) null);
+
+    public Input<RealParameter> birthRateInput =
+            new Input<RealParameter>("birthRate","the rate at which individuals give birth",(RealParameter) null);
+
+    protected double birthRate;
+    protected Distribution lifetimeDistribution;
+
+    @Override
+    public void initAndValidate() {
+        lifetimeDistribution = lifetimeDistributionInput.get();
+        birthRate = birthRateInput.get().getValue();
+    }
+
+    @Override
+    public double calculateLogDensity(double time) {
+        return 0;
+    }
+
+    @Override
+    public double calculateLogCDF(double time) {
+        return 0;
+    }
+}

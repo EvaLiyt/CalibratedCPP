@@ -4,9 +4,9 @@
 
   <service type="beast.base.core.BEASTInterface">
     <provider classname="calibratedcpp.evolution.speciation.CoalescentDistributionInterface"/>
-    <provider classname="calibratedcpp.CoalescentDistribution"/>
+    <provider classname="calibratedcpp.CoalescentPointProcessModel"/>
     <provider classname="calibratedcpp.evolution.speciation.CalibratedCoalescentPointProcess"/>
-    <provider classname="calibratedcpp.BirthDeathCoalescentDistribution"/>
-    <provider classname="calibratedcpp.BDSKYCoalescentDistribution"/>
+    <provider classname="calibratedcpp.BirthDeathModel"/>
+    <provider classname="calibratedcpp.BDSKYModel"/>
   </service>
 </package>

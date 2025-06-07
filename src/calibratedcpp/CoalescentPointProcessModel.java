@@ -8,7 +8,7 @@ import beast.base.core.Description;
  */
 
 @Description("Abstract class for the distribution of node ages in a CPP")
-public abstract class CoalescentDistribution extends BEASTObject {
+public abstract class CoalescentPointProcessModel extends BEASTObject {
     public abstract double calculateLogDensity(double time);
     public abstract double calculateLogCDF(double time);
 }
