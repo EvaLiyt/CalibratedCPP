@@ -11,28 +11,28 @@ import beast.base.inference.parameter.RealParameter;
 @Description("Node age distribution for the CPP representation of the birth-death process with piecewise constant rates")
 public class BDSKYModel extends CoalescentPointProcessModel {
     public Input<RealParameter> birthRateInput =
-            new Input<RealParameter>("birthRate","the birth rate",(RealParameter)null);
+            new Input<>("birthRate","the birth rate",(RealParameter)null);
 
     public Input<RealParameter> deathRateInput =
-            new Input<RealParameter>("deathRate","the death rate",(RealParameter)null);
+            new Input<>("deathRate","the death rate",(RealParameter)null);
 
     public Input<RealParameter> reproductiveNumberInput =
-            new Input<RealParameter>("reproductiveNumber","the reproductive number, birthRate / deathRate",(RealParameter) null);
+            new Input<>("reproductiveNumber","the reproductive number, birthRate / deathRate",(RealParameter) null);
 
     public Input<RealParameter> diversificationRateInput =
-            new Input<RealParameter>("diversificationRate","the diversification rate, birthRate - deathRate",(RealParameter) null);
+            new Input<>("diversificationRate","the diversification rate, birthRate - deathRate",(RealParameter) null);
 
     public Input<RealParameter> turnoverInput =
-            new Input<RealParameter>("turnover","deathrRate / birthRate", (RealParameter) null);
+            new Input<>("turnover","deathrRate / birthRate", (RealParameter) null);
 
     public Input<RealParameter> rhoInput =
-            new Input<RealParameter>("rho","the probability with which each individual in the total population is sampled",(RealParameter)null);
+            new Input<>("rho","the probability with which each individual in the total population is sampled",(RealParameter)null);
 
     public Input<RealParameter> birthRateChangeTimesInput =
-            new Input<RealParameter>("birthRateChangeTimes","the birth rate change times",(RealParameter)null);
+            new Input<>("birthRateChangeTimes","the birth rate change times",(RealParameter)null);
 
     public Input<RealParameter> deathRateChangeTimesInput =
-            new Input<RealParameter>("deathRateChangeTimes","the death rate change times",(RealParameter)null);
+            new Input<>("deathRateChangeTimes","the death rate change times",(RealParameter)null);
 
     protected double birthRate;
     protected double deathRate;
