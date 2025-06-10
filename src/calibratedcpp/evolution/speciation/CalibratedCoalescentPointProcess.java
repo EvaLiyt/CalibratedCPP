@@ -9,6 +9,7 @@ import beast.base.evolution.tree.Tree;
 import beast.base.evolution.tree.TreeInterface;
 import beast.base.evolution.tree.TreeParser;
 import beast.base.inference.parameter.RealParameter;
+
 import calibratedcpp.BirthDeathModel;
 import calibratedcpp.CoalescentPointProcessModel;
 
@@ -16,6 +17,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Collections;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Marcus Overwater
@@ -30,7 +35,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
             new Input<>("calibrations","Clade calibrations", (List<CalibrationPoint>) null);
 
     public Input<Boolean> conditionOnCalibrationInput =
-            new Input<>("conditionOnCalibrations","Boolean if the likelihood is conditioned on the clade calibrations (Default: true)", true);
+            new Input<>("conditionOnCalibrations","Boolean if the likelihood is conditioned on the clade calibrations (Default: true). For large trees with many calibrations it is recommended to set this to false and use the exchange operator.", true);
 
     protected TreeInterface tree;
 
@@ -53,9 +58,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         conditionOnCalibrations = (calibrations != null) ? conditionOnCalibrationInput.get() : false;
 
         if (conditionOnCalibrations) {
-            calibrations.sort(Comparator.comparingDouble((CalibrationPoint calibration) ->
-                    getMRCA(tree, calibration.taxa().asStringList()).getHeight()
-            ).reversed());
+            calibrations = postOrderTopologicalSort(tree, calibrations);
         }
 
         origin = model.getOrigin();
@@ -65,10 +68,10 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         rootAge = tree.getRoot().getHeight();
 
         if (!conditionOnRoot && origin < rootAge) {
-            throw new RuntimeException("rootAge(" + rootAge + ") > origin(" + origin + "): Origin must be greater than root age.");
+            throw new RuntimeException("rootAge (" + rootAge + ") > origin (" + origin + "): Origin must be greater than root age.");
         }
         if(conditionOnRoot && origin != null){
-            System.err.println("WARNING: Overriding origin when conditionOnRoot is true");
+            throw new RuntimeException("conditionOnRoot cannot be true when origin is not null.");
         }
 
         maxTime = conditionOnRoot ? rootAge : origin;
@@ -100,7 +103,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         int numCalibrations = calibrations.size();
 
-        int[] cladeSize = new int[numCalibrations];
+        int[] cladeSizes = new int[numCalibrations];
 
         double[] calibrationAges = new double[numCalibrations];
 
@@ -108,17 +111,24 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         int numTaxa = tree.getLeafNodeCount();
 
+        double[] logQti = new double[numCalibrations];
+        double[] logDiff = new double[numCalibrations];
+
         for (int i = 0 ; i < numCalibrations ; i++) {
             CalibrationPoint calibration = calibrations.get(i);
 
             calibrationAges[i] = getMRCA(tree, calibration.taxa().asStringList()).getHeight();
 
-            cladeSize[i] = calibration.taxa().getTaxonSet().size();
+            cladeSizes[i] = calibration.taxa().getTaxonSet().size();
 
-            marginalDensity += model.calculateLogDensity(calibrationAges[i]) + (cladeSize[i] - 2) * model.calculateLogCDF(calibrationAges[i]);
+            logQti[i] = model.calculateLogCDF(calibrationAges[i]);
+
+            logDiff[i] = logDiffExp(logQt, logQti[i]); // Precompute log difference of Q(t) - Q(t_i)
+
+            marginalDensity += model.calculateLogDensity(calibrationAges[i]) + (cladeSizes[i] - 2) * logQti[i];
         }
 
-        marginalDensity += calculateLogSumOfPermutations(calibrationAges, numCalibrations, cladeSize, numTaxa, logQt);
+        marginalDensity += calculateLogSumOfPermutations(numCalibrations, cladeSizes, numTaxa, logQt, logDiff);
 
         return marginalDensity;
     }
@@ -179,19 +189,10 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         return null; // Should never happen if both are in same tree
     }
 
-    private double calculateLogSumOfPermutations(double[] cladeAges, int numCalibrations, int[] cladeSizes, int numTaxa, double logQ_t) {
+    private double calculateLogSumOfPermutations(int numCalibrations, int[] cladeSizes, int numTaxa, double logQ_t, double[] logDiff) {
         int c = 0;
         for (int size : cladeSizes) c += size;
         int m = numTaxa - c;
-
-        // Precompute log Q(t_i) and log q(t_i)
-        double[] logQ_ti = new double[numCalibrations];
-        double[] logDiff = new double[numCalibrations];
-
-        for (int i = 0; i < numCalibrations; i++) {
-            logQ_ti[i] = model.calculateLogCDF(cladeAges[i]);
-            logDiff[i] = logDiffExp(logQ_t, logQ_ti[i]); // Precompute log difference of Q(t) - Q(t_i)
-        }
 
         int totalElements = m + numCalibrations;
 
@@ -229,22 +230,6 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         return logSumExp(logTerms);
     }
 
-// Same generatePermutations and logSumExp as before
-
-    private double logSumExp(List<Double> logValues) {
-        if (logValues.isEmpty()) return Double.NEGATIVE_INFINITY;
-        double max = Collections.max(logValues);
-        double sum = 0.0;
-        for (double val : logValues) sum += Math.exp(val - max);
-        return max + Math.log(sum);
-    }
-
-    private double logDiffExp(double a, double b) {
-        if (b > a) throw new IllegalArgumentException("logDiffExp: b must be <= a");
-        if (a == b) return Double.NEGATIVE_INFINITY;
-        return a + Math.log1p(-Math.exp(b - a));
-    }
-
     private void generatePermutations(int n, int k, List<Integer> current, boolean[] used, List<List<Integer>> result) {
         if (current.size() == k) {
             result.add(new ArrayList<>(current));
@@ -262,6 +247,77 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         }
     }
 
+    private double logSumExp(List<Double> logValues) {
+        if (logValues.isEmpty()) return Double.NEGATIVE_INFINITY;
+        double max = Collections.max(logValues);
+        double sum = 0.0;
+        for (double val : logValues) sum += Math.exp(val - max);
+        return max + Math.log(sum);
+    }
+
+    private double logDiffExp(double a, double b) {
+        if (b > a) throw new IllegalArgumentException("logDiffExp: b must be <= a");
+        if (a == b) return Double.NEGATIVE_INFINITY;
+        return a + Math.log1p(-Math.exp(b - a));
+    }
+
+    private boolean isNested(CalibrationPoint inner, CalibrationPoint outer, TreeInterface tree) {
+        Node innerMRCA = getMRCA(tree, inner.taxa().asStringList());
+        Node outerMRCA = getMRCA(tree, outer.taxa().asStringList());
+        return isDescendant(innerMRCA, outerMRCA);
+    }
+
+    private boolean isDescendant(Node node, Node ancestor) {
+        while (node != null) {
+            if (node == ancestor) return true;
+            node = node.getParent();
+        }
+        return false;
+    }
+
+    private Map<CalibrationPoint, List<CalibrationPoint>> buildNestingDAG(List<CalibrationPoint> calibrations, TreeInterface tree) {
+        Map<CalibrationPoint, List<CalibrationPoint>> graph = new HashMap<>();
+        for (CalibrationPoint c1 : calibrations) {
+            graph.putIfAbsent(c1, new ArrayList<>());
+            for (CalibrationPoint c2 : calibrations) {
+                if (c1 == c2) continue;
+                if (isNested(c2, c1, tree)) {
+                    graph.get(c1).add(c2);  // c1 contains c2
+                }
+            }
+        }
+        return graph;
+    }
+
+    private List<CalibrationPoint> postOrderTopologicalSort(TreeInterface tree, List<CalibrationPoint> calibrations) {
+        Map<CalibrationPoint, List<CalibrationPoint>> graph = buildNestingDAG(calibrations, tree);
+        List<CalibrationPoint> sorted = new ArrayList<>();
+        Set<CalibrationPoint> visited = new HashSet<>();
+
+        for (CalibrationPoint c : calibrations) {
+            postOrderDFS(c, graph, visited, sorted, tree);
+        }
+
+        return sorted;
+    }
+
+    private void postOrderDFS(CalibrationPoint current, Map<CalibrationPoint, List<CalibrationPoint>> graph,
+                              Set<CalibrationPoint> visited, List<CalibrationPoint> result, TreeInterface tree) {
+        if (visited.contains(current)) return;
+        visited.add(current);
+
+        List<CalibrationPoint> children = graph.getOrDefault(current, new ArrayList<>());
+        children.sort(Comparator.comparingDouble(
+                (CalibrationPoint c) -> getMRCA(tree, c.taxa().asStringList()).getHeight()
+        ).reversed()); // Oldest to youngest
+
+        for (CalibrationPoint child : children) {
+            postOrderDFS(child, graph, visited, result, tree);
+        }
+
+        result.add(current); // Post-order: visit after children
+    }
+
     public static void main(String[] args){
         Tree tree = new TreeParser();
         tree.initByName("newick", "((A:2,B:2):1,C:3):0;",
@@ -271,16 +327,17 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         BirthDeathModel birthDeath = new BirthDeathModel();
 
         birthDeath.initByName("birthRate", new RealParameter("2.0"),
-                "deathRate", new RealParameter("2.0"),
-                "rho", new RealParameter("0.1"),
-                "conditionOnRootAge", true,
-                "origin", new RealParameter("0.0")
+                "deathRate", new RealParameter("1.0"),
+                "rho", new RealParameter("0.0"),
+                "conditionOnRoot", true
+//                "origin", new RealParameter("3.0")
         );
+
         CalibratedCoalescentPointProcess cpp = new CalibratedCoalescentPointProcess();
         cpp.initByName("tree", tree,
                 "treeModel", birthDeath
                 );
-        System.out.println(tree);
-        System.out.println("logP=" + cpp.calculateLogP());
+        System.out.println("tree = " + tree);
+        System.out.println("logP = " + cpp.calculateLogP());
     }
 }

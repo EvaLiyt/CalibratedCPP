@@ -89,8 +89,8 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
         }
 
         // Validation
-        if (birthRate <= 0.0 || deathRate < 0.0 || rho < 0.0 || rho > 1.0) {
-            throw new IllegalArgumentException("birthRate must be > 0, deathRate must be >= 0, and rho must be between 0 and 1.");
+        if (birthRate <= 0.0 || deathRate < 0.0 || rho > 1.0 || rho <= 0.0) {
+            throw new IllegalArgumentException("birthRate (" + birthRate + ") must be > 0, deathRate (" + deathRate + ") must be >= 0, AND rho (" + rho + ") must be between 0.0 and 1.0.");
         }
 
         diversificationRate = birthRate - deathRate;
@@ -108,9 +108,9 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
         double logDensity;
 
         double rt = diversificationRate * time;
-
         double A = rho * birthRate;
         double B = birthRate * (1 - rho) - deathRate;
+
         if (diversificationRate == 0.0) {
             // Critical case
             logDensity = logRho + logBirthRate - 2 * Math.log(1 + rho * birthRate * time);

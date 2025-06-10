@@ -16,7 +16,7 @@ public abstract class CoalescentPointProcessModel extends BEASTObject {
             new Input<>("origin", "Age of the origin (time of process start)", (RealParameter) null);
 
     public Input<Boolean> conditionOnRootInput =
-            new Input<>("conditionOnRootAge", "Whether the model is conditioned on the root age (default: false)", false);
+            new Input<>("conditionOnRoot", "Whether the model is conditioned on the root age (default: false)", false);
 
     public abstract double calculateLogDensity(double time);
     public abstract double calculateLogCDF(double time);

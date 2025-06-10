@@ -26,11 +26,11 @@
         </state>
 
         <distribution id="birthDeath" spec="calibratedcpp.evolution.speciation.CalibratedCoalescentPointProcess">
-               <treeModel spec="calibratedcpp.BirthDeathModel" origin="3.0">
-                   <birthRate value="2.0"/>
-                   <deathRate value="1.0"/>
-                   <rho value="1.0"/>
-               </treeModel>
+            <treeModel spec="calibratedcpp.BirthDeathModel" origin="3.0">
+                <birthRate value="2.0"/>
+                <deathRate value="1.0"/>
+                <rho value="1.0"/>
+            </treeModel>
         </distribution>
 
         <operator id='treeScaler_root' spec='ScaleOperator' scaleFactor=".75" weight="2" tree="@tree" degreesOfFreedom="1" scaleAllIndependently="false" rootOnly='true'/>
