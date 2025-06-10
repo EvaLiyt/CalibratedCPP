@@ -22,45 +22,47 @@ import java.util.Collections;
 
 @Description("A general class of birth-death processes with homochronous sampling conditioning on clade calibrations")
 public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
-    public Input<RealParameter> originInput =
-            new Input<>("origin", "Age of the origin", (RealParameter) null);
-
-    public Input<RealParameter> rootInput =
-            new Input<>("rootAge", "Optional, if provided, the tree density is conditioned on the root age", (RealParameter) null);
-
-    public Input<CoalescentPointProcessModel> coalescentDensityInput =
-            new Input<>("treeModel", "coalescentDensity", (CoalescentPointProcessModel) null);
+    public Input<CoalescentPointProcessModel> cppModelInput =
+            new Input<>("treeModel", "The tree model", (CoalescentPointProcessModel) null);
 
     public Input<List<CalibrationPoint>> calibrationsInput =
             new Input<>("calibrations","Clade calibrations", (List<CalibrationPoint>) null);
 
     public Input<Boolean> conditionOnCalibrationInput =
-            new Input<>("conditionOnCalibrations","Boolean if the likelihood is conditioned on the clade calibrations, default true", true);
+            new Input<>("conditionOnCalibrations","Boolean if the likelihood is conditioned on the clade calibrations (Default: true)", true);
 
-    protected CoalescentPointProcessModel q;
+    protected TreeInterface tree;
+
+    protected CoalescentPointProcessModel model;
+    protected List<CalibrationPoint> calibrations = new ArrayList<>();
+    protected boolean conditionOnCalibrations;
+
     protected Double origin;
     protected Double rootAge;
-    protected List<CalibrationPoint> calibrations = new ArrayList<>();
+
     protected boolean conditionOnRoot;
-    protected TreeInterface tree;
     protected double maxTime;
-    protected boolean conditionOnCalibrations;
 
     @Override
     public void initAndValidate() {
 
-        q = coalescentDensityInput.get();
-        origin = originInput.get().getValue();
-        rootAge = rootInput.get().getValue();
+        model = cppModelInput.get();
         calibrations = calibrationsInput.get();
-        tree = treeInput.get();
-
         conditionOnCalibrations = (calibrations != null) ? conditionOnCalibrationInput.get() : false;
 
-        conditionOnRoot = (rootAge != null);
+        tree = treeInput.get();
 
-        if (origin == null && rootAge == null) {
-            throw new IllegalArgumentException("Either root age or origin must be specified.");
+        origin = model.getOrigin();
+
+        conditionOnRoot = model.isConditionOnRoot();
+
+        rootAge = tree.getRoot().getHeight();
+
+        if (!conditionOnRoot && origin < rootAge) {
+            throw new RuntimeException("rootAge(" + rootAge + ") > origin(" + origin + "): Origin must be greater than root age.");
+        }
+        if(conditionOnRoot && origin != null){
+            System.err.println("WARNING: Overriding origin when conditionOnRoot is true");
         }
 
         maxTime = conditionOnRoot ? rootAge : origin;
@@ -70,25 +72,24 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
     public double calculateUnConditionedTreeLogLikelihood(TreeInterface tree) {
 
-        double logP = Math.log1p(-Math.exp(q.calculateLogCDF(maxTime)));
+        double logP = Math.log1p(-Math.exp(model.calculateLogCDF(maxTime)));
 
         if (conditionOnRoot) {
-            logP += logP - q.calculateLogDensity(maxTime);
+            logP += logP - model.calculateLogDensity(maxTime);
         }
 
         for (Node node : tree.getInternalNodes()){
             double age = node.getHeight();
-            logP += q.calculateLogDensity(age);
+            logP += model.calculateLogDensity(age);
         }
-
         return logP;
     }
 
     public double calculateLogMarginalDensityOfCalibrations(TreeInterface tree, List<CalibrationPoint> calibrations) {
-        double marginalDensity = Math.log1p(-Math.exp(q.calculateLogCDF(maxTime)));
+        double marginalDensity = Math.log1p(-Math.exp(model.calculateLogCDF(maxTime)));
 
         if (conditionOnRoot) {
-            marginalDensity *= 2;
+            marginalDensity += marginalDensity;
         }
 
         int numCalibrations = calibrations.size();
@@ -96,6 +97,8 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         int[] cladeSize = new int[numCalibrations];
 
         double[] calibrationAges = new double[numCalibrations];
+
+        double logQt = model.calculateLogCDF(maxTime);
 
         int numTaxa = tree.getLeafNodeCount();
 
@@ -106,10 +109,10 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
             cladeSize[i] = calibration.taxa().getTaxonSet().size();
 
-            marginalDensity += q.calculateLogDensity(calibrationAges[i]) + (cladeSize[i] - 2) * q.calculateLogCDF(calibrationAges[i]);
+            marginalDensity += model.calculateLogDensity(calibrationAges[i]) + (cladeSize[i] - 2) * model.calculateLogCDF(calibrationAges[i]);
         }
 
-        marginalDensity += calculateSumOfPermutations(calibrationAges, numCalibrations, cladeSize, numTaxa);
+        marginalDensity += calculateLogSumOfPermutations(calibrationAges, numCalibrations, cladeSize, numTaxa, logQt);
 
         return marginalDensity;
     }
@@ -170,15 +173,63 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         return null; // Should never happen if both are in same tree
     }
 
-    private double calculateSumOfPermutations(double[] cladeAges, int numCalibrations, int[] cladeSizes, int numTaxa) {
-        int totalConditionedTaxa = 0;
-        for (int c : cladeSizes) {
-            totalConditionedTaxa += c;
-        }
-        int m = numTaxa - totalConditionedTaxa;
+    private double calculateLogSumOfPermutations(double[] cladeAges, int numCalibrations, int[] cladeSizes, int numTaxa, double logQ_t) {
+        int k = numCalibrations;
+        int c = 0;
+        for (int size : cladeSizes) c += size;
+        int m = numTaxa - c;
 
-        return 0.0;
+        // Precompute log Q(t_i) and log q(t_i)
+        double[] logQ_ti = new double[k];
+        for (int i = 0; i < k; i++) {
+            logQ_ti[i] = model.calculateLogCDF(cladeAges[i]);
+        }
+
+        // Precompute log(Q(t) - Q(t_i)) = logDiffExp(logQ_t, logQ_ti[i])
+        double[] logDiff = new double[k];
+        for (int i = 0; i < k; i++) {
+            logDiff[i] = logDiffExp(logQ_t, logQ_ti[i]);
+        }
+
+        int totalElements = m + k;
+
+        List<List<Integer>> permutations = new ArrayList<>();
+        generatePermutations(totalElements, k, new ArrayList<>(), new boolean[totalElements], permutations);
+
+        List<Double> logTerms = new ArrayList<>();
+
+        for (List<Integer> perm : permutations) {
+            int sum_s = 0;
+            int[] s = new int[k];
+
+            for (int i = 0; i < k; i++) {
+                int ell_i = perm.get(i);
+                int countAdj = 0;
+                for (int j = 0; j < i; j++) {
+                    int ell_j = perm.get(j);
+                    if (ell_j == ell_i - 1 || ell_j == ell_i + 1) {
+                        countAdj++;
+                    }
+                }
+                s[i] = (ell_i == 0 ? 1 : 0) + (ell_i == totalElements - 1 ? 1 : 0) + countAdj;
+                sum_s += s[i];
+            }
+
+            // Compute log term for this permutation
+            double logTerm = (m - k - 1 + sum_s) * logQ_t;
+
+            for (int i = 0; i < k; i++) {
+                logTerm += (2 - s[i]) * logDiff[i];
+            }
+
+            logTerms.add(logTerm);
+        }
+
+        // Use logSumExp to sum all terms in log space
+        return logSumExp(logTerms);
     }
+
+// Same generatePermutations and logSumExp as before
 
     private double logSumExp(List<Double> logValues) {
         if (logValues.isEmpty()) return Double.NEGATIVE_INFINITY;
@@ -186,6 +237,29 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         double sum = 0.0;
         for (double val : logValues) sum += Math.exp(val - max);
         return max + Math.log(sum);
+    }
+
+    private double logDiffExp(double a, double b) {
+        if (b > a) throw new IllegalArgumentException("logDiffExp: b must be <= a");
+        if (a == b) return Double.NEGATIVE_INFINITY;
+        return a + Math.log1p(-Math.exp(b - a));
+    }
+
+    private void generatePermutations(int n, int k, List<Integer> current, boolean[] used, List<List<Integer>> result) {
+        if (current.size() == k) {
+            result.add(new ArrayList<>(current));
+            return;
+        }
+
+        for (int i = 0; i < n; i++) {
+            if (!used[i]) {
+                used[i] = true;
+                current.add(i);
+                generatePermutations(n, k, current, used, result);
+                current.remove(current.size() - 1);
+                used[i] = false;
+            }
+        }
     }
 
     public static void main(String[] args){
@@ -196,17 +270,16 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         BirthDeathModel birthDeath = new BirthDeathModel();
 
-        birthDeath.initByName("deathRate", new RealParameter("1.0"),
-                "diversificationRate", new RealParameter("0.0"),
-                "rho", new RealParameter("0.1")
+        birthDeath.initByName("birthRate", new RealParameter("2.0"),
+                "deathRate", new RealParameter("2.0"),
+                "rho", new RealParameter("0.1"),
+                "conditionOnRootAge", true,
+                "origin", new RealParameter("0.0")
         );
-
         CalibratedCoalescentPointProcess cpp = new CalibratedCoalescentPointProcess();
         cpp.initByName("tree", tree,
-                "treeModel", birthDeath,
-                "origin", new RealParameter("5.0")
+                "treeModel", birthDeath
                 );
-
         System.out.println(tree);
         System.out.println("logP=" + cpp.calculateLogP());
     }
