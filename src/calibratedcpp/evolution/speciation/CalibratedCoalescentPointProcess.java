@@ -13,6 +13,7 @@ import calibratedcpp.BirthDeathModel;
 import calibratedcpp.CoalescentPointProcessModel;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Collections;
 
@@ -20,7 +21,7 @@ import java.util.Collections;
  * @author Marcus Overwater
  */
 
-@Description("A general class of birth-death processes with homochronous sampling conditioning on clade calibrations")
+@Description("A general class of birth-death processes with incomplete extant sampling and conditioning on clade calibrations")
 public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     public Input<CoalescentPointProcessModel> cppModelInput =
             new Input<>("treeModel", "The tree model", (CoalescentPointProcessModel) null);
@@ -46,11 +47,16 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     @Override
     public void initAndValidate() {
 
+        tree = treeInput.get();
         model = cppModelInput.get();
         calibrations = calibrationsInput.get();
         conditionOnCalibrations = (calibrations != null) ? conditionOnCalibrationInput.get() : false;
 
-        tree = treeInput.get();
+        if (conditionOnCalibrations) {
+            calibrations.sort(Comparator.comparingDouble((CalibrationPoint calibration) ->
+                    getMRCA(tree, calibration.taxa().asStringList()).getHeight()
+            ).reversed());
+        }
 
         origin = model.getOrigin();
 
@@ -174,35 +180,33 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     }
 
     private double calculateLogSumOfPermutations(double[] cladeAges, int numCalibrations, int[] cladeSizes, int numTaxa, double logQ_t) {
-        int k = numCalibrations;
         int c = 0;
         for (int size : cladeSizes) c += size;
         int m = numTaxa - c;
 
         // Precompute log Q(t_i) and log q(t_i)
-        double[] logQ_ti = new double[k];
-        for (int i = 0; i < k; i++) {
+        double[] logQ_ti = new double[numCalibrations];
+        double[] logDiff = new double[numCalibrations];
+
+        for (int i = 0; i < numCalibrations; i++) {
             logQ_ti[i] = model.calculateLogCDF(cladeAges[i]);
+            logDiff[i] = logDiffExp(logQ_t, logQ_ti[i]); // Precompute log difference of Q(t) - Q(t_i)
         }
 
-        // Precompute log(Q(t) - Q(t_i)) = logDiffExp(logQ_t, logQ_ti[i])
-        double[] logDiff = new double[k];
-        for (int i = 0; i < k; i++) {
-            logDiff[i] = logDiffExp(logQ_t, logQ_ti[i]);
-        }
-
-        int totalElements = m + k;
+        int totalElements = m + numCalibrations;
 
         List<List<Integer>> permutations = new ArrayList<>();
-        generatePermutations(totalElements, k, new ArrayList<>(), new boolean[totalElements], permutations);
+        generatePermutations(totalElements, numCalibrations, new ArrayList<>(), new boolean[totalElements], permutations);
 
         List<Double> logTerms = new ArrayList<>();
 
+        double logTerm = 0;
+
         for (List<Integer> perm : permutations) {
             int sum_s = 0;
-            int[] s = new int[k];
+            int[] s = new int[numCalibrations];
 
-            for (int i = 0; i < k; i++) {
+            for (int i = 0; i < numCalibrations; i++) {
                 int ell_i = perm.get(i);
                 int countAdj = 0;
                 for (int j = 0; j < i; j++) {
@@ -213,18 +217,14 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
                 }
                 s[i] = (ell_i == 0 ? 1 : 0) + (ell_i == totalElements - 1 ? 1 : 0) + countAdj;
                 sum_s += s[i];
+
+                logTerm += (2 - s[i]) * logDiff[i]; // Compute log term for this permutation
             }
 
-            // Compute log term for this permutation
-            double logTerm = (m - k - 1 + sum_s) * logQ_t;
-
-            for (int i = 0; i < k; i++) {
-                logTerm += (2 - s[i]) * logDiff[i];
-            }
+            logTerm += (m - numCalibrations - 1 + sum_s) * logQ_t;
 
             logTerms.add(logTerm);
         }
-
         // Use logSumExp to sum all terms in log space
         return logSumExp(logTerms);
     }
