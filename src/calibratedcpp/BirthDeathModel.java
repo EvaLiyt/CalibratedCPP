@@ -26,19 +26,22 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
             new Input<>("turnover", "Turnover (mu / lambda)", (RealParameter) null);
 
     public Input<RealParameter> rhoInput =
-            new Input<>("rho","Probability with which each individual in the population is sampled (Default: 1.0)", new RealParameter("1.0") );
+            new Input<>("rho","Probability with which each individual in the population is sampled.", (RealParameter) null );
 
     protected Double birthRate;
     protected Double deathRate;
     protected Double diversificationRate;
     protected Double reproductiveNumber;
     protected Double turnover;
-    protected double rho;
+    protected Double rho;
 
     protected double logBirthRate;
     protected double logDeathRate;
     protected double logDiversificationRate;
     protected double logRho;
+
+    protected double A;
+    protected double B;
 
     @Override
     public void initAndValidate() {
@@ -47,11 +50,15 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
         diversificationRate = safeGet(diversificationRateInput);
         reproductiveNumber = safeGet(reproductiveNumberInput);
         turnover = safeGet(turnoverInput);
-        rho = rhoInput.get().getValue();
+        rho = safeGet(rhoInput);
 
         int specified = 0;
         for (Double i : new Double[] {birthRate, deathRate, diversificationRate, reproductiveNumber, turnover}) {
             if (i != null) specified++;
+        }
+
+        if (rho == null) {
+           throw new IllegalArgumentException("rho parameter must be specified.");
         }
 
         if (specified != 2) {
@@ -93,6 +100,9 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
             throw new IllegalArgumentException("birthRate (" + birthRate + ") must be > 0, deathRate (" + deathRate + ") must be >= 0, AND rho (" + rho + ") must be between 0.0 and 1.0.");
         }
 
+        A = rho * birthRate;
+        B = birthRate * (1 - rho) - deathRate;
+
         diversificationRate = birthRate - deathRate;
 
         logBirthRate = Math.log(birthRate);
@@ -106,10 +116,7 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
     @Override
     public double calculateLogDensity(double time){
         double logDensity;
-
         double rt = diversificationRate * time;
-        double A = rho * birthRate;
-        double B = birthRate * (1 - rho) - deathRate;
 
         if (diversificationRate == 0.0) {
             // Critical case
@@ -130,9 +137,6 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
     @Override
     public double calculateLogCDF(double time){
         double logCDF;
-
-        double A = rho * birthRate;
-        double B = birthRate * (1 - rho) - deathRate;
 
         if (diversificationRate == 0.0) {
             // Critical case

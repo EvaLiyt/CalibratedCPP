@@ -70,9 +70,6 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         if (!conditionOnRoot && origin < rootAge) {
             throw new RuntimeException("rootAge (" + rootAge + ") > origin (" + origin + "): Origin must be greater than root age.");
         }
-        if(conditionOnRoot && origin != null){
-            throw new RuntimeException("conditionOnRoot cannot be true when origin is not null.");
-        }
 
         maxTime = conditionOnRoot ? rootAge : origin;
 
@@ -101,15 +98,14 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
             marginalDensity += marginalDensity;
         }
 
+        int numTaxa = tree.getLeafNodeCount();
         int numCalibrations = calibrations.size();
 
-        int[] cladeSizes = new int[numCalibrations];
-
         double[] calibrationAges = new double[numCalibrations];
+        int[] cladeSizes = new int[numCalibrations];
+        int sumCladeSizes = 0;
 
         double logQt = model.calculateLogCDF(maxTime);
-
-        int numTaxa = tree.getLeafNodeCount();
 
         double[] logQti = new double[numCalibrations];
         double[] logDiff = new double[numCalibrations];
@@ -118,17 +114,16 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
             CalibrationPoint calibration = calibrations.get(i);
 
             calibrationAges[i] = getMRCA(tree, calibration.taxa().asStringList()).getHeight();
-
             cladeSizes[i] = calibration.taxa().getTaxonSet().size();
+            sumCladeSizes += cladeSizes[i];
 
             logQti[i] = model.calculateLogCDF(calibrationAges[i]);
-
             logDiff[i] = logDiffExp(logQt, logQti[i]); // Precompute log difference of Q(t) - Q(t_i)
 
             marginalDensity += model.calculateLogDensity(calibrationAges[i]) + (cladeSizes[i] - 2) * logQti[i];
         }
 
-        marginalDensity += calculateLogSumOfPermutations(numCalibrations, cladeSizes, numTaxa, logQt, logDiff);
+        marginalDensity += calculateLogSumOfPermutations(numCalibrations, sumCladeSizes, numTaxa, logQt, logDiff);
 
         return marginalDensity;
     }
@@ -142,6 +137,46 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         }
 
         return logP;
+    }
+
+    private double calculateLogSumOfPermutations(int numCalibrations, int sumCladeSizes, int numTaxa, double logQ_t, double[] logDiff) {
+
+        int m = numTaxa - sumCladeSizes;
+
+        int totalElements = m + numCalibrations;
+
+        List<List<Integer>> permutations = new ArrayList<>();
+        generatePermutations(totalElements, numCalibrations, new ArrayList<>(), new boolean[totalElements], permutations);
+
+        List<Double> logTerms = new ArrayList<>();
+
+        double logTerm = 0;
+
+        for (List<Integer> perm : permutations) {
+            int sum_s = 0;
+            int[] s = new int[numCalibrations];
+
+            for (int i = 0; i < numCalibrations; i++) {
+                int ell_i = perm.get(i);
+                int countAdj = 0;
+                for (int j = 0; j < i; j++) {
+                    int ell_j = perm.get(j);
+                    if (ell_j == ell_i - 1 || ell_j == ell_i + 1) {
+                        countAdj++;
+                    }
+                }
+                s[i] = (ell_i == 0 ? 1 : 0) + (ell_i == totalElements - 1 ? 1 : 0) + countAdj;
+                sum_s += s[i];
+
+                logTerm += (2 - s[i]) * logDiff[i]; // Compute log term for this permutation
+            }
+
+            logTerm += (m - numCalibrations - 1 + sum_s) * logQ_t;
+
+            logTerms.add(logTerm);
+        }
+        // Use logSumExp to sum all terms in log space
+        return logSumExp(logTerms);
     }
 
     private Node getMRCA(TreeInterface tree, List<String> taxonIDs) {
@@ -187,47 +222,6 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         }
 
         return null; // Should never happen if both are in same tree
-    }
-
-    private double calculateLogSumOfPermutations(int numCalibrations, int[] cladeSizes, int numTaxa, double logQ_t, double[] logDiff) {
-        int c = 0;
-        for (int size : cladeSizes) c += size;
-        int m = numTaxa - c;
-
-        int totalElements = m + numCalibrations;
-
-        List<List<Integer>> permutations = new ArrayList<>();
-        generatePermutations(totalElements, numCalibrations, new ArrayList<>(), new boolean[totalElements], permutations);
-
-        List<Double> logTerms = new ArrayList<>();
-
-        double logTerm = 0;
-
-        for (List<Integer> perm : permutations) {
-            int sum_s = 0;
-            int[] s = new int[numCalibrations];
-
-            for (int i = 0; i < numCalibrations; i++) {
-                int ell_i = perm.get(i);
-                int countAdj = 0;
-                for (int j = 0; j < i; j++) {
-                    int ell_j = perm.get(j);
-                    if (ell_j == ell_i - 1 || ell_j == ell_i + 1) {
-                        countAdj++;
-                    }
-                }
-                s[i] = (ell_i == 0 ? 1 : 0) + (ell_i == totalElements - 1 ? 1 : 0) + countAdj;
-                sum_s += s[i];
-
-                logTerm += (2 - s[i]) * logDiff[i]; // Compute log term for this permutation
-            }
-
-            logTerm += (m - numCalibrations - 1 + sum_s) * logQ_t;
-
-            logTerms.add(logTerm);
-        }
-        // Use logSumExp to sum all terms in log space
-        return logSumExp(logTerms);
     }
 
     private void generatePermutations(int n, int k, List<Integer> current, boolean[] used, List<List<Integer>> result) {
@@ -328,9 +322,9 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         birthDeath.initByName("birthRate", new RealParameter("2.0"),
                 "deathRate", new RealParameter("1.0"),
-                "rho", new RealParameter("0.0"),
-                "conditionOnRoot", true
-//                "origin", new RealParameter("3.0")
+                "rho", new RealParameter("0.1"),
+                "conditionOnRoot", true,
+                "origin", new RealParameter("3.0")
         );
 
         CalibratedCoalescentPointProcess cpp = new CalibratedCoalescentPointProcess();
