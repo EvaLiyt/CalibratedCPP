@@ -43,8 +43,12 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
     protected double A;
     protected double B;
 
+    protected boolean isCritical;
+
     @Override
     public void initAndValidate() {
+        super.initAndValidate();
+
         birthRate = safeGet(birthRateInput);
         deathRate = safeGet(deathRateInput);
         diversificationRate = safeGet(diversificationRateInput);
@@ -105,12 +109,12 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
 
         diversificationRate = birthRate - deathRate;
 
+        isCritical = Math.abs(diversificationRate) < 1e-10;
+
         logBirthRate = Math.log(birthRate);
         logDeathRate = Math.log(deathRate);
         logRho = Math.log(rho);
         logDiversificationRate = Math.log(Math.abs(diversificationRate));
-
-        super.initAndValidate();
     }
 
     @Override
@@ -118,9 +122,9 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
         double logDensity;
         double rt = diversificationRate * time;
 
-        if (diversificationRate == 0.0) {
+        if (isCritical) {
             // Critical case
-            logDensity = logRho + logBirthRate - 2 * Math.log(1 + rho * birthRate * time);
+            logDensity = logRho + logBirthRate - 2 * Math.log1p(A * time);
         }
         else if (diversificationRate < 0) {
                 // Sub-critical case: use stable form with exp(r * t)
@@ -138,9 +142,9 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
     public double calculateLogCDF(double time){
         double logCDF;
 
-        if (diversificationRate == 0.0) {
+        if (isCritical) {
             // Critical case
-            logCDF = logRho + logBirthRate + Math.log(time) - Math.log1p(rho * birthRate * time);
+            logCDF = logRho + logBirthRate + Math.log(time) - Math.log1p(A * time);
         }
         else if (diversificationRate < 0) {
                 // Sub-critical case

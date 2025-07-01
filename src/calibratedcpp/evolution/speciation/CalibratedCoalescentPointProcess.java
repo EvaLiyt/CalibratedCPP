@@ -51,6 +51,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
     @Override
     public void initAndValidate() {
+        super.initAndValidate();
 
         tree = treeInput.get();
         model = cppModelInput.get();
@@ -72,8 +73,6 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         }
 
         maxTime = conditionOnRoot ? rootAge : origin;
-
-        super.initAndValidate();
     }
 
     public double calculateUnConditionedTreeLogLikelihood(TreeInterface tree) {
@@ -321,17 +320,21 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         BirthDeathModel birthDeath = new BirthDeathModel();
 
         birthDeath.initByName("birthRate", new RealParameter("2.0"),
-                "deathRate", new RealParameter("1.0"),
+                "deathRate", new RealParameter("2.0"),
                 "rho", new RealParameter("0.1"),
                 "conditionOnRoot", true,
                 "origin", new RealParameter("3.0")
         );
+
+        boolean b;
+        b = birthDeath.birthRateInput.get().getValue() - birthDeath.deathRateInput.get().getValue() < 1e-10;
 
         CalibratedCoalescentPointProcess cpp = new CalibratedCoalescentPointProcess();
         cpp.initByName("tree", tree,
                 "treeModel", birthDeath
                 );
         System.out.println("tree = " + tree);
+        System.out.println("isCritical = " + b);
         System.out.println("logP = " + cpp.calculateLogP());
     }
 }
