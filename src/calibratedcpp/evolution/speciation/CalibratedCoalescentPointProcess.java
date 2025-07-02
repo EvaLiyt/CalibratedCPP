@@ -28,6 +28,12 @@ import java.util.Set;
 
 @Description("A general class of birth-death processes with incomplete extant sampling and conditioning on clade calibrations")
 public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
+    public Input<RealParameter> originInput =
+            new Input<>("origin", "Age of the origin (time of process start)", (RealParameter) null);
+
+    public Input<Boolean> conditionOnRootInput =
+            new Input<>("conditionOnRoot", "Whether the model is conditioned on the root age (default: false)", false);
+
     public Input<CoalescentPointProcessModel> cppModelInput =
             new Input<>("treeModel", "The tree model", (CoalescentPointProcessModel) null);
 
@@ -53,6 +59,14 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     public void initAndValidate() {
         super.initAndValidate();
 
+        RealParameter originParam = originInput.get();
+        origin = (originParam != null) ? originParam.getValue() : null;
+        conditionOnRoot = conditionOnRootInput.get();
+
+        if (origin == null && !conditionOnRoot) {
+            throw new IllegalArgumentException("You must either provide an origin age or set conditionOnRoot=true.");
+        }
+
         tree = treeInput.get();
         model = cppModelInput.get();
         calibrations = calibrationsInput.get();
@@ -61,10 +75,6 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         if (conditionOnCalibrations) {
             calibrations = postOrderTopologicalSort(tree, calibrations);
         }
-
-        origin = model.getOrigin();
-
-        conditionOnRoot = model.isConditionedOnRoot();
 
         rootAge = tree.getRoot().getHeight();
 
