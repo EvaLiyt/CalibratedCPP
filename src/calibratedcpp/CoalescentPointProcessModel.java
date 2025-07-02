@@ -13,8 +13,4 @@ import beast.base.inference.parameter.RealParameter;
 public abstract class CoalescentPointProcessModel extends BEASTObject {
     public abstract double calculateLogDensity(double time);
     public abstract double calculateLogCDF(double time);
-
-    public void initAndValidate() {
-
-    }
 }
