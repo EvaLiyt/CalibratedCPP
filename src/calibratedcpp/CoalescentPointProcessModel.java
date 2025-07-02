@@ -2,8 +2,6 @@ package calibratedcpp;
 
 import beast.base.core.BEASTObject;
 import beast.base.core.Description;
-import beast.base.core.Input;
-import beast.base.inference.parameter.RealParameter;
 
 /**
  * @author Marcus Overwater
