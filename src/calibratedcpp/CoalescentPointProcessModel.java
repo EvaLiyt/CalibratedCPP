@@ -39,7 +39,7 @@ public abstract class CoalescentPointProcessModel extends BEASTObject {
         return origin;
     }
 
-    public boolean isConditionOnRoot() {
+    public boolean isConditionedOnRoot() {
         return conditionOnRoot;
     }
 }

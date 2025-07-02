@@ -64,7 +64,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         origin = model.getOrigin();
 
-        conditionOnRoot = model.isConditionOnRoot();
+        conditionOnRoot = model.isConditionedOnRoot();
 
         rootAge = tree.getRoot().getHeight();
 
