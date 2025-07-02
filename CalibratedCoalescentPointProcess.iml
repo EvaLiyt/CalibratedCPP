@@ -7,8 +7,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="beast2" exported="" />
-    <orderEntry type="module" module-name="feast" exported="" />
-    <orderEntry type="module" module-name="beastfx" exported="" />
+    <orderEntry type="library" name="CalibratedCoalescentPointProcess" level="project" />
   </component>
 </module>

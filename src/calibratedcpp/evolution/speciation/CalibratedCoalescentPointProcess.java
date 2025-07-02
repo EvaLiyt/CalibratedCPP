@@ -331,9 +331,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         birthDeath.initByName("birthRate", new RealParameter("2.0"),
                 "deathRate", new RealParameter("2.0"),
-                "rho", new RealParameter("0.1"),
-                "conditionOnRoot", true,
-                "origin", new RealParameter("3.0")
+                "rho", new RealParameter("0.1")
         );
 
         boolean b;
@@ -341,7 +339,8 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         CalibratedCoalescentPointProcess cpp = new CalibratedCoalescentPointProcess();
         cpp.initByName("tree", tree,
-                "treeModel", birthDeath
+                "treeModel", birthDeath,
+                "origin", new RealParameter("4.0")
                 );
         System.out.println("tree = " + tree);
         System.out.println("isCritical = " + b);
