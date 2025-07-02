@@ -5,8 +5,8 @@ The CPP is a model of ultrametric trees where node ages are i.i.d. random variab
 
 ## Structure
 
-The abstract class CoalescentPointProcessModel with abstract methods for the density and of the node age.
+The abstract class CoalescentPointProcessModel has abstract methods for the density and of the node age.
 
 BirthDeathModel extends CoalescentPointProcessModel with node age density and CDF for the birth-death process.
 
-CalibratedCoalescentPointProcess extends SpeciesTreeDistribution and takes a CPP model and a list of calibrations as input.
+CalibratedCoalescentPointProcess extends SpeciesTreeDistribution and takes a CoalescentPointProcessModel and a list of calibrations, and the origin age OR conditionOnRoot as input.
