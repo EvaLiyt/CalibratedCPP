@@ -16,21 +16,20 @@
                  :beast.base.evolution.alignment
                  :feast.fileio" version="2.7">
 
+
     <run chainLength="50000000" id="mcmc" spec="MCMC" storeEvery="1000">
         <state id="state" storeEvery="1000">
             <stateNode id="tree" spec="feast.fileio.TreeFromNewickFile"
-                       fileName="startTree.txt"
+                       fileName="examples/startTree.txt"
                        IsLabelledNewick="true"
                        adjustTipHeights="true">
             </stateNode>
         </state>
+        <distribution id="posterior" spec="beast.base.inference.CompoundDistribution" >
 
-        <distribution id="birthDeath" spec="calibratedcpp.CalibratedCoalescentPointProcess">
-            <treeModel spec="calibratedcpp.model.BirthDeathModel" origin="3.0">
-                <birthRate value="2.0"/>
-                <deathRate value="1.0"/>
-                <rho value="1.0"/>
-            </treeModel>
+            <distribution id="birthDeath" spec="calibratedcpp.CalibratedCoalescentPointProcess" tree="@tree" conditionOnRoot="true">
+                <treeModel id="treeModel" spec="calibratedcpp.model.BirthDeathModel" birthRate="2.0" deathRate="1.0" rho="0.1"/>
+            </distribution>
         </distribution>
 
         <operator id='treeScaler_root' spec='ScaleOperator' scaleFactor=".75" weight="2" tree="@tree" degreesOfFreedom="1" scaleAllIndependently="false" rootOnly='true'/>
@@ -42,13 +41,13 @@
         <operator id="wilsonBalding" spec='WilsonBalding' weight="10" tree="@tree"/>
 
         <logger fileName="./$(filebase).log" id="tracelog" logEvery="1000" mode="autodetect">
-            <log idref="birthDeath"/>
+<!--            <log idref="birthDeath"/>-->
             <log id="treeStats" spec="beast.base.evolution.tree.TreeStatLogger" tree="@tree"/>
         </logger>
 
         <logger id="screenlog" logEvery="10000" mode="autodetect">
             <log arg="@birthDeath" id="ESS.0" spec="util.ESS"/>
-            <log idref="birthDeath"/>
+<!--            <log idref="birthDeath"/>-->
             <log idref="treeStats"/>
         </logger>
 

@@ -8,6 +8,9 @@
     </content>
     <orderEntry type="jdk" jdkName="zulu-17" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="CalibratedCoalescentPointProcess" level="project" />
+    <orderEntry type="module" module-name="beast2" exported="" />
+    <orderEntry type="module" module-name="beastfx" exported="" />
+    <orderEntry type="module" module-name="feast" exported="" />
+    <orderEntry type="library" exported="" name="lib" level="project" />
   </component>
 </module>

@@ -23,16 +23,16 @@ public class BirthDeathSkylineModel extends CoalescentPointProcessModel {
             new Input<>("diversificationRate","the diversification rate, birthRate - deathRate",(RealParameter) null);
 
     public Input<RealParameter> turnoverInput =
-            new Input<>("turnover","deathrRate / birthRate", (RealParameter) null);
+            new Input<>("turnover","deathRate / birthRate", (RealParameter) null);
 
     public Input<RealParameter> rhoInput =
-            new Input<>("rho","the probability with which each individual in the total population is sampled",(RealParameter)null);
+            new Input<>("rho","the probability with which each individual in the total population is sampled",(RealParameter) null);
 
     public Input<RealParameter> birthRateChangeTimesInput =
-            new Input<>("birthRateChangeTimes","the birth rate change times",(RealParameter)null);
+            new Input<>("birthRateChangeTimes","the birth rate change times",(RealParameter) null);
 
     public Input<RealParameter> deathRateChangeTimesInput =
-            new Input<>("deathRateChangeTimes","the death rate change times",(RealParameter)null);
+            new Input<>("deathRateChangeTimes","the death rate change times",(RealParameter) null);
 
     protected double birthRate;
     protected double deathRate;

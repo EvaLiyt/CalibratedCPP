@@ -2,6 +2,7 @@ package calibratedcpp;
 
 import beast.base.core.Description;
 import beast.base.core.Input;
+import beast.base.core.Log;
 import beast.base.evolution.speciation.CalibrationPoint;
 import beast.base.evolution.speciation.SpeciesTreeDistribution;
 import beast.base.evolution.tree.Node;
@@ -33,11 +34,11 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     public Input<Boolean> conditionOnRootInput =
             new Input<>("conditionOnRoot", "Whether the model is conditioned on the root age (default: false)", false);
 
-    public Input<calibratedcpp.model.CoalescentPointProcessModel> cppModelInput =
-            new Input<>("treeModel", "The tree model", (calibratedcpp.model.CoalescentPointProcessModel) null);
+    public Input<CoalescentPointProcessModel> cppModelInput =
+            new Input<>("treeModel", "The tree model", (CoalescentPointProcessModel) null);
 
     public Input<List<CalibrationPoint>> calibrationsInput =
-            new Input<>("calibrations","Clade calibrations", (List<CalibrationPoint>) null);
+            new Input<>("calibrations","Clade calibrations", new ArrayList<>());
 
     public Input<Boolean> conditionOnCalibrationsInput =
             new Input<>("conditionOnCalibrations","Boolean if the likelihood is conditioned on the clade calibrations (Default: true). " +
@@ -46,8 +47,8 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     protected TreeInterface tree;
 
     protected CoalescentPointProcessModel model;
-    protected List<CalibrationPoint> calibrations = new ArrayList<>();
-    protected Map<CalibrationPoint, List<CalibrationPoint>> calibrationGraph = new HashMap<>();
+    protected List<CalibrationPoint> calibrations;
+    protected Map<CalibrationPoint, List<CalibrationPoint>> calibrationGraph;
     protected boolean conditionOnCalibrations;
 
     protected Double origin;
@@ -71,11 +72,13 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         tree = treeInput.get();
         model = cppModelInput.get();
         calibrations = calibrationsInput.get();
-        conditionOnCalibrations = (calibrations != null) ? conditionOnCalibrationsInput.get() : false;
+        conditionOnCalibrations = (!calibrations.isEmpty()) ? conditionOnCalibrationsInput.get() : false;
 
         if (conditionOnCalibrations) {
             calibrations = postOrderTopologicalSort(tree, calibrations);
         }
+
+        calibrationGraph = new HashMap<>();
 
         rootAge = tree.getRoot().getHeight();
 

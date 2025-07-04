@@ -2,6 +2,7 @@ package calibratedcpp.model;
 
 import beast.base.core.Description;
 import beast.base.core.Input;
+import beast.base.core.Log;
 import beast.base.inference.parameter.RealParameter;
 
 /**
@@ -26,7 +27,7 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
             new Input<>("turnover", "Turnover (mu / lambda)", (RealParameter) null);
 
     public Input<RealParameter> rhoInput =
-            new Input<>("rho","Probability with which each individual in the population is sampled.", (RealParameter) null );
+            new Input<>("rho","Probability with which each individual in the population is sampled.", (RealParameter) null);
 
     protected Double birthRate;
     protected Double deathRate;
@@ -47,6 +48,7 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
 
     @Override
     public void initAndValidate() {
+        
         birthRate = safeGet(birthRateInput);
         deathRate = safeGet(deathRateInput);
         diversificationRate = safeGet(diversificationRateInput);
