@@ -39,13 +39,15 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     public Input<List<CalibrationPoint>> calibrationsInput =
             new Input<>("calibrations","Clade calibrations", (List<CalibrationPoint>) null);
 
-    public Input<Boolean> conditionOnCalibrationInput =
-            new Input<>("conditionOnCalibrations","Boolean if the likelihood is conditioned on the clade calibrations (Default: true). For large trees with many calibrations it is recommended to set this to false and use the exchange operator.", true);
+    public Input<Boolean> conditionOnCalibrationsInput =
+            new Input<>("conditionOnCalibrations","Boolean if the likelihood is conditioned on the clade calibrations (Default: true). " +
+                    "For large trees with many calibrations it is recommended to set this to false and use the exchange operator.", true);
 
     protected TreeInterface tree;
 
     protected CoalescentPointProcessModel model;
     protected List<CalibrationPoint> calibrations = new ArrayList<>();
+    protected Map<CalibrationPoint, List<CalibrationPoint>> calibrationGraph = new HashMap<>();
     protected boolean conditionOnCalibrations;
 
     protected Double origin;
@@ -69,7 +71,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         tree = treeInput.get();
         model = cppModelInput.get();
         calibrations = calibrationsInput.get();
-        conditionOnCalibrations = (calibrations != null) ? conditionOnCalibrationInput.get() : false;
+        conditionOnCalibrations = (calibrations != null) ? conditionOnCalibrationsInput.get() : false;
 
         if (conditionOnCalibrations) {
             calibrations = postOrderTopologicalSort(tree, calibrations);
@@ -99,42 +101,57 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         return logP;
     }
 
-    public double calculateLogMarginalDensityOfCalibrations(TreeInterface tree, List<CalibrationPoint> calibrations) {
-        double marginalDensity = Math.log1p(-Math.exp(model.calculateLogCDF(maxTime)));
+    public double calculateLogMarginalDensityOfCalibrations(TreeInterface tree,
+                                                            List<CalibrationPoint> calibrations,
+                                                            Map<CalibrationPoint, List<CalibrationPoint>> calibrationGraph) {
+        double logQt = Math.log(model.calculateLogCDF(maxTime));
+        double marginalDensity = model.calculateLogDensity(maxTime) + Math.log1p(-Math.exp(logQt));
 
         int numTaxa = tree.getLeafNodeCount();
-        int numCalibrations = calibrations.size();
 
-        double[] calibrationAges = new double[numCalibrations];
-        int[] cladeSizes = new int[numCalibrations];
-        int sumCladeSizes = 0;
-
-        double logQt = model.calculateLogCDF(maxTime);
-
-        double[] logQti = new double[numCalibrations];
-        double[] logDiff = new double[numCalibrations];
-
-        for (int i = 0 ; i < numCalibrations ; i++) {
-            CalibrationPoint calibration = calibrations.get(i);
-
-            calibrationAges[i] = getMRCA(tree, calibration.taxa().asStringList()).getHeight();
-            cladeSizes[i] = calibration.taxa().getTaxonSet().size();
-            sumCladeSizes += cladeSizes[i];
-
-            logQti[i] = model.calculateLogCDF(calibrationAges[i]);
-            logDiff[i] = logDiffExp(logQt, logQti[i]); // Precompute log difference of Q(t) - Q(t_i)
-
-            marginalDensity += model.calculateLogDensity(calibrationAges[i]) + (cladeSizes[i] - 2) * logQti[i];
+        // Step 1: Find all CalibrationPoints that appear as children
+        Set<CalibrationPoint> children = new HashSet<>();
+        for (List<CalibrationPoint> childList : calibrationGraph.values()) {
+            children.addAll(childList);
         }
 
-        marginalDensity += calculateLogSumOfPermutations(numCalibrations, sumCladeSizes, numTaxa, logQt, logDiff);
+        // Step 2: Roots = all calibrations that are not children
+        Set<CalibrationPoint> roots = new HashSet<>(calibrations);
+        roots.removeAll(children); // Now only root calibrations remain
+
+        // Step 3: Compute log density for each root (recursively handles children)
+        int numMaxCalibrations = roots.size();
+
+        double[] calibrationAges = new double[numMaxCalibrations];
+        int[] cladeSizes = new int[numMaxCalibrations];
+        int sumCladeSizes = 0;
+
+        int index = 0;
+
+        double[] logQti = new double[numMaxCalibrations];
+        double[] logDiff = new double[numMaxCalibrations];
+
+        for (CalibrationPoint root : roots) {
+            marginalDensity += calculateLogDensityOfSingleCalibration(tree, root, calibrationGraph);
+
+            calibrationAges[index] = getMRCA(tree, root.taxa().asStringList()).getHeight();
+            logQti[index] = model.calculateLogCDF(calibrationAges[index]);
+            logDiff[index] = logDiffExp(logQt, logQti[index]);
+
+            cladeSizes[index] = root.taxa().getTaxonCount();
+            sumCladeSizes += cladeSizes[index];
+
+            index++;
+        }
+
+        marginalDensity += calculateLogSumOfPermutations(numMaxCalibrations, sumCladeSizes, numTaxa, logQt, logDiff);
 
         return marginalDensity;
     }
 
-    public double calculateLogDensityOfSingleCalibration(CalibrationPoint calibration,
-                                                         Map<CalibrationPoint, List<CalibrationPoint>> calibrationGraph,
-                                                         TreeInterface tree) {
+    public double calculateLogDensityOfSingleCalibration(TreeInterface tree,
+                                                         CalibrationPoint calibration,
+                                                         Map<CalibrationPoint, List<CalibrationPoint>> calibrationGraph) {
         List<CalibrationPoint> children = calibrationGraph.getOrDefault(calibration, new ArrayList<>());
 
         Node mrca = getMRCA(tree, calibration.taxa().asStringList());
@@ -142,7 +159,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         int cladeSize = calibration.taxa().getTaxonSet().size();
         double logQ_t = model.calculateLogCDF(cladeHeight);
 
-        double logDensity = model.calculateLogDensity(cladeHeight) + Math.log1p(-Math.exp(logQ_t));
+        double logDensity = model.calculateLogDensity(cladeHeight);
 
         if (children.isEmpty()) {
             // Leaf calibration
@@ -158,7 +175,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         for (int i = 0; i < numChildren; i++) {
             CalibrationPoint child = children.get(i);
-            logChildDensities[i] = calculateLogDensityOfSingleCalibration(child, calibrationGraph, tree);
+            logChildDensities[i] = calculateLogDensityOfSingleCalibration(tree, child, calibrationGraph);
             childCladeSizes[i] = child.taxa().getTaxonSet().size();
             childCDFs[i] = model.calculateLogCDF(getMRCA(tree, child.taxa().asStringList()).getHeight());
         }
@@ -190,7 +207,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         logP = calculateUnConditionedTreeLogLikelihood(tree);
 
         if (conditionOnCalibrations) {
-            logP -= calculateLogMarginalDensityOfCalibrations(tree, calibrations);
+            logP -= calculateLogMarginalDensityOfCalibrations(tree, calibrations, calibrationGraph);
         }
 
         return logP;
