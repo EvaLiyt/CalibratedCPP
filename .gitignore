@@ -27,3 +27,9 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### BEAST Output ###
+*.log
+*.trees
+*.state
+*.state.new
