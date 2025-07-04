@@ -22,8 +22,8 @@
                    adjustTipHeights="false"
         />
     </state>
-    <distribution id="birthDeath" spec="calibratedcpp.evolution.speciation.CalibratedCoalescentPointProcess" conditionOnCalibrations="false">
-        <treeModel spec="calibratedcpp.BirthDeathModel" origin="5.0">
+    <distribution id="birthDeath" spec="calibratedcpp.CalibratedCoalescentPointProcess" conditionOnCalibrations="false">
+        <treeModel spec="calibratedcpp.model.BirthDeathModel" origin="5.0">
             <reproductiveNumber value="2.0"/>
             <deathRate value="1.0"/>
             <rho value="0.1"/>

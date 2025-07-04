@@ -1,4 +1,4 @@
-package calibratedcpp.evolution.speciation;
+package calibratedcpp;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,5 +12,13 @@ class CalibratedCoalescentPointProcessTest {
 
     @Test
     void calculateLogMarginalDensityOfCalibrations() {
+    }
+
+    @Test
+    void calculateLogDensityOfSingleCalibration() {
+    }
+
+    @Test
+    void calculateTreeLogLikelihood() {
     }
 }

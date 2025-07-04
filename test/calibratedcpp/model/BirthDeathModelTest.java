@@ -1,4 +1,4 @@
-package calibratedcpp;
+package calibratedcpp.model;
 
 import org.junit.jupiter.api.Test;
 

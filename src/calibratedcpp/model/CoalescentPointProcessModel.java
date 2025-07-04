@@ -1,4 +1,4 @@
-package calibratedcpp;
+package calibratedcpp.model;
 
 import beast.base.core.BEASTObject;
 import beast.base.core.Description;

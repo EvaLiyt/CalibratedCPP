@@ -1,9 +1,12 @@
-package calibratedcpp;
+package calibratedcpp.model;
 
+import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.inference.Distribution;
 import beast.base.inference.parameter.RealParameter;
 
+@Description("This gives the node age distribution and density of an age dependent binary branching process" +
+        "where individuals share some time dependent lifetime distribution and give birth at a piecewise constant rate.")
 public class AgeDependentModel extends CoalescentPointProcessModel {
     public Input<Distribution> lifetimeDistributionInput =
             new Input<>("lifetimeDistribution","distribution of the lifetime of an individual",(Distribution) null);

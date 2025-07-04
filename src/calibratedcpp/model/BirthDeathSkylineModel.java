@@ -1,4 +1,4 @@
-package calibratedcpp;
+package calibratedcpp.model;
 
 import beast.base.core.Description;
 import beast.base.core.Input;
@@ -9,7 +9,7 @@ import beast.base.inference.parameter.RealParameter;
  */
 
 @Description("Node age distribution for the CPP representation of the birth-death process with piecewise constant rates")
-public class BDSKYModel extends CoalescentPointProcessModel {
+public class BirthDeathSkylineModel extends CoalescentPointProcessModel {
     public Input<RealParameter> birthRateInput =
             new Input<>("birthRate","the birth rate",(RealParameter)null);
 

@@ -1,4 +1,4 @@
-package calibratedcpp;
+package calibratedcpp.model;
 
 import beast.base.core.Description;
 import beast.base.core.Input;
