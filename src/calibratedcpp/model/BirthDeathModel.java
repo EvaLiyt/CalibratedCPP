@@ -48,7 +48,7 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
 
     @Override
     public void initAndValidate() {
-        
+
         birthRate = safeGet(birthRateInput);
         deathRate = safeGet(deathRateInput);
         diversificationRate = safeGet(diversificationRateInput);

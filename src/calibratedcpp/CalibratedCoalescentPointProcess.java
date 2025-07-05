@@ -76,9 +76,10 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         if (conditionOnCalibrations) {
             calibrations = postOrderTopologicalSort(tree, calibrations);
+            calibrationGraph = buildNestingDAG(calibrations, tree); // <-- THIS LINE IS MISSING
+        } else {
+            calibrationGraph = new HashMap<>();
         }
-
-        calibrationGraph = new HashMap<>();
 
         rootAge = tree.getRoot().getHeight();
 
