@@ -71,7 +71,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         tree = treeInput.get();
         model = cppModelInput.get();
-        calibrations = calibrationsInput.get();
+        calibrations = new ArrayList<>(calibrationsInput.get());
         conditionOnCalibrations = (!calibrations.isEmpty()) ? conditionOnCalibrationsInput.get() : false;
 
         if (conditionOnCalibrations) {
@@ -108,7 +108,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     public double calculateLogMarginalDensityOfCalibrations(TreeInterface tree,
                                                             List<CalibrationPoint> calibrations,
                                                             Map<CalibrationPoint, List<CalibrationPoint>> calibrationGraph) {
-        double logQt = Math.log(model.calculateLogCDF(maxTime));
+        double logQt = model.calculateLogCDF(maxTime);
         double marginalDensity = model.calculateLogDensity(maxTime) + Math.log1p(-Math.exp(logQt));
 
         int numTaxa = tree.getLeafNodeCount();
@@ -208,13 +208,37 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
     @Override
     public double calculateTreeLogLikelihood(TreeInterface tree) {
-        logP = calculateUnConditionedTreeLogLikelihood(tree);
+        logP = 0.0;
+        for (CalibrationPoint c : calibrations) {
+            Node mrca = getMRCA(tree, c.taxa().asStringList());
+            Set<String> mrcaLeafIDs = new HashSet<>();
+            collectLeafTaxa(mrca, mrcaLeafIDs);
+            Set<String> calibrationTaxa = new HashSet<>(c.taxa().asStringList());
+
+            if (!mrcaLeafIDs.equals(calibrationTaxa)) {
+                return Double.NEGATIVE_INFINITY; // Calibration clade is not monophyletic
+            }
+            else {
+                logP += c.dist().logDensity(mrca.getHeight());
+            }
+        }
+        logP += calculateUnConditionedTreeLogLikelihood(tree);
 
         if (conditionOnCalibrations) {
             logP -= calculateLogMarginalDensityOfCalibrations(tree, calibrations, calibrationGraph);
         }
 
         return logP;
+    }
+
+    private void collectLeafTaxa(Node node, Set<String> leafIDs) {
+        if (node.isLeaf()) {
+            leafIDs.add(node.getID());
+        } else {
+            for (int i = 0; i < node.getChildCount(); i++) {
+                collectLeafTaxa(node.getChild(i), leafIDs);
+            }
+        }
     }
 
     private double calculateLogSumOfPermutations(int numCalibrations, int sumCladeSizes, int numTaxa, double logQ_t, double[] logDiff) {
@@ -328,7 +352,8 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     }
 
     private double logDiffExp(double a, double b) {
-        if (b > a) throw new IllegalArgumentException("logDiffExp: b must be <= a");
+//        if (b > a) throw new IllegalArgumentException("logDiffExp: b must be <= a");
+        if (b > a) return Double.NEGATIVE_INFINITY;
         if (a == b) return Double.NEGATIVE_INFINITY;
         return a + Math.log1p(-Math.exp(b - a));
     }
@@ -404,7 +429,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         calibratedcpp.model.BirthDeathModel birthDeath = new BirthDeathModel();
 
-        birthDeath.initByName("birthRate", new RealParameter("2.0"),
+        birthDeath.initByName("birthRate", new RealParameter("3.0"),
                 "deathRate", new RealParameter("2.0"),
                 "rho", new RealParameter("0.1")
         );
