@@ -130,7 +130,6 @@
         <distribution id="posterior" spec="beast.base.inference.CompoundDistribution" >
             <distribution id="birthDeath" spec="calibratedcpp.CalibratedCoalescentPointProcess" tree="@tree" conditionOnRoot="true">
                 <treeModel id="treeModel" spec="calibratedcpp.model.BirthDeathModel" birthRate="2.0" deathRate="1.0" rho="0.1"/>
-<!--                <calibrations id="calibrationList">-->
                     <calibrations spec="beast.base.evolution.speciation.CalibrationPoint" id="clade1">
                         <taxonset id="clade_1_taxa" spec="TaxonSet">
                             <taxon id="leaf_1" spec="Taxon"/>
@@ -138,44 +137,43 @@
                         </taxonset>
                         <distr spec="beast.base.inference.distribution.Uniform" lower="0.99" upper="1.01"/>
                     </calibrations>
-<!--                    <CalibrationPoint spec="beast.base.evolution.speciation.CalibrationPoint" id="clade2">-->
-<!--                        <taxonset id="clade_2_taxa" spec="TaxonSet">-->
-<!--                            <taxon id="leaf_45" spec="Taxon"/>-->
-<!--                            <taxon id="leaf_46" spec="Taxon"/>-->
-<!--                            <taxon id="leaf_47" spec="Taxon"/>-->
-<!--                            <taxon id="leaf_48" spec="Taxon"/>-->
-<!--                            <taxon id="leaf_49" spec="Taxon"/>-->
-<!--                            <taxon id="leaf_50" spec="Taxon"/>-->
-<!--                            <taxon id="leaf_51" spec="Taxon"/>-->
-<!--                        </taxonset>-->
-<!--                        <distr spec="beast.base.inference.distribution.Uniform" lower="1.19" upper="1.21"/>-->
-<!--                    </CalibrationPoint>-->
-<!--                    <CalibrationPoint spec="beast.base.evolution.speciation.CalibrationPoint" id="clade3">-->
-<!--                        <taxonset id="clade_3_taxa" spec="TaxonSet">-->
-<!--                            <taxon idref="leaf_45"/>-->
-<!--                            <taxon idref="leaf_46"/>-->
-<!--                            <taxon idref="leaf_47"/>-->
-<!--                            <taxon idref="leaf_48"/>-->
-<!--                            <taxon idref="leaf_49"/>-->
-<!--                            <taxon idref="leaf_50"/>-->
-<!--                            <taxon idref="leaf_51"/>-->
-<!--                            <taxon id="leaf_52" spec="Taxon"/>-->
-<!--                            <taxon id="leaf_53" spec="Taxon"/>-->
-<!--                            <taxon id="leaf_54" spec="Taxon"/>-->
-<!--                            <taxon id="leaf_55" spec="Taxon"/>-->
-<!--                        </taxonset>-->
-<!--                        <distr spec="beast.base.inference.distribution.Uniform" lower="1.49" upper="1.51"/>-->
-<!--                    </CalibrationPoint>-->
-<!--                    <CalibrationPoint spec="beast.base.evolution.speciation.CalibrationPoint" id="clad4">-->
-<!--                        <taxonset id="clade_4_taxa" spec="TaxonSet">-->
-<!--                            <taxon id="leaf_87" spec="Taxon"/>-->
-<!--                            <taxon id="leaf_88" spec="Taxon"/>-->
-<!--                            <taxon id="leaf_89" spec="Taxon"/>-->
-<!--                            <taxon id="leaf_90" spec="Taxon"/>-->
-<!--                        </taxonset>-->
-<!--                        <distr spec="beast.base.inference.distribution.Uniform" lower="1.99" upper="2.01"/>-->
-<!--                    </CalibrationPoint>-->
-<!--                </calibrations>-->
+                    <calibrations spec="beast.base.evolution.speciation.CalibrationPoint" id="clade2">
+                        <taxonset id="clade_2_taxa" spec="TaxonSet">
+                            <taxon id="leaf_45" spec="Taxon"/>
+                            <taxon id="leaf_46" spec="Taxon"/>
+                            <taxon id="leaf_47" spec="Taxon"/>
+                            <taxon id="leaf_48" spec="Taxon"/>
+                            <taxon id="leaf_49" spec="Taxon"/>
+                            <taxon id="leaf_50" spec="Taxon"/>
+                            <taxon id="leaf_51" spec="Taxon"/>
+                        </taxonset>
+                        <distr spec="beast.base.inference.distribution.Uniform" lower="1.19" upper="1.21"/>
+                    </calibrations>
+                    <calibrations spec="beast.base.evolution.speciation.CalibrationPoint" id="clade3">
+                        <taxonset id="clade_3_taxa" spec="TaxonSet">
+                            <taxon idref="leaf_45"/>
+                            <taxon idref="leaf_46"/>
+                            <taxon idref="leaf_47"/>
+                            <taxon idref="leaf_48"/>
+                            <taxon idref="leaf_49"/>
+                            <taxon idref="leaf_50"/>
+                            <taxon idref="leaf_51"/>
+                            <taxon id="leaf_52" spec="Taxon"/>
+                            <taxon id="leaf_53" spec="Taxon"/>
+                            <taxon id="leaf_54" spec="Taxon"/>
+                            <taxon id="leaf_55" spec="Taxon"/>
+                        </taxonset>
+                        <distr spec="beast.base.inference.distribution.Uniform" lower="1.49" upper="1.51"/>
+                    </calibrations>
+                    <calibrations spec="beast.base.evolution.speciation.CalibrationPoint" id="clad4">
+                        <taxonset id="clade_4_taxa" spec="TaxonSet">
+                            <taxon id="leaf_87" spec="Taxon"/>
+                            <taxon id="leaf_88" spec="Taxon"/>
+                            <taxon id="leaf_89" spec="Taxon"/>
+                            <taxon id="leaf_90" spec="Taxon"/>
+                        </taxonset>
+                        <distr spec="beast.base.inference.distribution.Uniform" lower="1.99" upper="2.01"/>
+                    </calibrations>
             </distribution>
         </distribution>
 
@@ -192,13 +190,13 @@
             <log id="treeStats" spec="beast.base.evolution.tree.TreeStatLogger" tree="@tree"/>
         </logger>
 
-        <logger id="screenlog" logEvery="1" mode="autodetect">
+        <logger id="screenlog" logEvery="1000" mode="autodetect">
             <log arg="@birthDeath" id="ESS.0" spec="util.ESS"/>
 <!--            <log idref="birthDeath"/>-->
             <log idref="treeStats"/>
         </logger>
 
-        <logger fileName="./$(filebase).trees" id="treelog" logEvery="10000" mode="tree">
+        <logger fileName="./$(filebase).trees" id="treelog" logEvery="1000" mode="tree">
             <log idref="tree"/>
         </logger>
     </run>
