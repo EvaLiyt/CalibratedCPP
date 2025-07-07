@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --time=1:20:00
+#SBATCH --job-name="BDSKY"
+#SBATCH --array=1-100
+#SBATCH --mem-per-cpu=4096
+
+i=$SLURM_ARRAY_TASK_ID
+
+java --module-path=/cluster/software/stacks/2024-06/spack/opt/spack/linux-ubuntu22.04-x86_64_v3/gcc-12.2.0/javafx-20.0.1-3yh2tfmjuuvehv2uhgfvswuwzcushdow/lib \
+     --add-modules javafx.controls,javafx.fxml -jar $HOME/CalibratedCoalescentPointProcess.jar -seed $i \
+     -statefile CBD_Inference.Regular.$i.state \
+     -D Index=$i \
+     -overwrite mcmc_inference.xml

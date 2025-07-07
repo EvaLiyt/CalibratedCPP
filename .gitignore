@@ -36,3 +36,9 @@ bin/
 *.trees
 *.state
 *.state.new
+
+### R ###
+.Rprofile
+.Rhistory
+.Rproj.user
+validation.Rproj
