@@ -11,6 +11,6 @@ i=$SLURM_ARRAY_TASK_ID
 
 java --module-path=/cluster/software/stacks/2024-06/spack/opt/spack/linux-ubuntu22.04-x86_64_v3/gcc-12.2.0/javafx-20.0.1-3yh2tfmjuuvehv2uhgfvswuwzcushdow/lib \
      --add-modules javafx.controls,javafx.fxml -jar $HOME/CalibratedCoalescentPointProcess.jar -seed $i \
-     -statefile CBD_Inference.Regular.$i.state \
+     -statefile mcmc_inference_$i.state \
      -D Index=$i \
      -overwrite mcmc_inference.xml
