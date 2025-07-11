@@ -2,7 +2,6 @@ package calibratedcpp;
 
 import beast.base.core.Description;
 import beast.base.core.Input;
-import beast.base.core.Log;
 import beast.base.evolution.speciation.CalibrationPoint;
 import beast.base.evolution.speciation.SpeciesTreeDistribution;
 import beast.base.evolution.tree.Node;
@@ -91,6 +90,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     }
 
     public double calculateUnConditionedTreeLogLikelihood(TreeInterface tree) {
+        updateModel(tree);
 
         double logP = Math.log1p(-Math.exp(model.calculateLogCDF(maxTime)));
 
@@ -108,6 +108,8 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     public double calculateLogMarginalDensityOfCalibrations(TreeInterface tree,
                                                             List<CalibrationPoint> calibrations,
                                                             Map<CalibrationPoint, List<CalibrationPoint>> calibrationGraph) {
+
+        updateModel(tree);
         double logQt = model.calculateLogCDF(maxTime);
         double marginalDensity = model.calculateLogDensity(maxTime) + Math.log1p(-Math.exp(logQt));
 
@@ -156,6 +158,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     public double calculateLogDensityOfSingleCalibration(TreeInterface tree,
                                                          CalibrationPoint calibration,
                                                          Map<CalibrationPoint, List<CalibrationPoint>> calibrationGraph) {
+        updateModel(tree);
         List<CalibrationPoint> children = calibrationGraph.getOrDefault(calibration, new ArrayList<>());
 
         Node mrca = getMRCA(tree, calibration.taxa().asStringList());
@@ -208,6 +211,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
     @Override
     public double calculateTreeLogLikelihood(TreeInterface tree) {
+        updateModel(tree);
         logP = 0.0;
         for (CalibrationPoint c : calibrations) {
             Node mrca = getMRCA(tree, c.taxa().asStringList());
@@ -419,6 +423,29 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         int output = 0;
         for (int val : values) output += val;
         return output;
+    }
+
+    public void updateModel(TreeInterface tree) {
+        model = cppModelInput.get();
+        origin = (originInput.get() != null) ? originInput.get().getValue() : null;
+        maxTime = (conditionOnRoot) ? tree.getRoot().getHeight() : originInput.get().getValue();
+    }
+
+//    @Override
+//    public void store() {
+//        model = cppModelInput.get();
+//    }
+//
+//    @Override
+//    public void restore() {
+//        model = cppModelInput.get();
+//    }
+
+    @Override
+    public boolean requiresRecalculation() {
+        super.requiresRecalculation();
+        model = cppModelInput.get();
+        return true;
     }
 
     public static void main(String[] args){

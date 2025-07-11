@@ -118,6 +118,7 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
 
     @Override
     public double calculateLogDensity(double time){
+        updateParameters();
         double logDensity;
         double rt = diversificationRate * time;
 
@@ -139,6 +140,7 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
 
     @Override
     public double calculateLogCDF(double time){
+        updateParameters();
         double logCDF;
 
         if (isCritical) {
@@ -161,6 +163,85 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
                         - Math.log(A + B * exp_neg_rt);
             }
         return logCDF;
+    }
+
+    public void updateParameters() {
+        birthRate = safeGet(birthRateInput);
+        deathRate = safeGet(deathRateInput);
+        diversificationRate = safeGet(diversificationRateInput);
+        reproductiveNumber = safeGet(reproductiveNumberInput);
+        turnover = safeGet(turnoverInput);
+        rho = safeGet(rhoInput);
+
+        if (birthRate != null && deathRate != null) {
+            diversificationRate = birthRate - deathRate;
+        } else if (birthRate != null && diversificationRate != null) {
+            deathRate = birthRate - diversificationRate;
+        } else if (deathRate != null && diversificationRate != null) {
+            birthRate = deathRate + diversificationRate;
+        } else if (birthRate != null && reproductiveNumber != null) {
+            deathRate = birthRate / reproductiveNumber;
+        } else if (deathRate != null && reproductiveNumber != null) {
+            birthRate = deathRate * reproductiveNumber;
+        } else if (birthRate != null && turnover != null) {
+            deathRate = birthRate * turnover;
+        } else if (deathRate != null && turnover != null) {
+            birthRate = deathRate / turnover;
+        } else if (diversificationRate != null && reproductiveNumber != null) {
+            deathRate = diversificationRate / (reproductiveNumber - 1);
+            birthRate = deathRate * reproductiveNumber;
+        } else if (diversificationRate != null && turnover != null) {
+            birthRate = diversificationRate / (1 - turnover);
+            deathRate = birthRate * turnover;
+        } else {
+            throw new IllegalArgumentException("Unsupported parameter combination.");
+        }
+
+        A = rho * birthRate;
+        B = birthRate * (1 - rho) - deathRate;
+
+        diversificationRate = birthRate - deathRate;
+
+        isCritical = Math.abs(diversificationRate) < 1e-10;
+
+        logBirthRate = Math.log(birthRate);
+        logDeathRate = Math.log(deathRate);
+        logRho = Math.log(rho);
+        logDiversificationRate = Math.log(Math.abs(diversificationRate));
+    }
+
+//    @Override
+//    public void store(){
+//        super.store();
+//        birthRate = safeGet(birthRateInput);
+//        deathRate = safeGet(deathRateInput);
+//        diversificationRate = safeGet(diversificationRateInput);
+//        reproductiveNumber = safeGet(reproductiveNumberInput);
+//        turnover = safeGet(turnoverInput);
+//        rho = safeGet(rhoInput);
+//    }
+//
+//    @Override
+//    public void restore(){
+//        super.restore();
+//        birthRate = safeGet(birthRateInput);
+//        deathRate = safeGet(deathRateInput);
+//        diversificationRate = safeGet(diversificationRateInput);
+//        reproductiveNumber = safeGet(reproductiveNumberInput);
+//        turnover = safeGet(turnoverInput);
+//        rho = safeGet(rhoInput);
+//    }
+
+    @Override
+    protected boolean requiresRecalculation() {
+        super.requiresRecalculation();
+        birthRate = safeGet(birthRateInput);
+        deathRate = safeGet(deathRateInput);
+        diversificationRate = safeGet(diversificationRateInput);
+        reproductiveNumber = safeGet(reproductiveNumberInput);
+        turnover = safeGet(turnoverInput);
+        rho = safeGet(rhoInput);
+        return true;
     }
 
     private Double safeGet(Input<RealParameter> input) {
