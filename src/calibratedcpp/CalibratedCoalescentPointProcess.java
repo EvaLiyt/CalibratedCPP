@@ -211,6 +211,9 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
     @Override
     public double calculateTreeLogLikelihood(TreeInterface tree) {
+        if (originInput.get().getValue() < tree.getRoot().getHeight()) {
+            return Double.NEGATIVE_INFINITY;
+        }
         updateModel(tree);
         logP = 0.0;
         for (CalibrationPoint c : calibrations) {
@@ -431,20 +434,9 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         maxTime = (conditionOnRoot) ? tree.getRoot().getHeight() : originInput.get().getValue();
     }
 
-//    @Override
-//    public void store() {
-//        model = cppModelInput.get();
-//    }
-//
-//    @Override
-//    public void restore() {
-//        model = cppModelInput.get();
-//    }
-
     @Override
     public boolean requiresRecalculation() {
         super.requiresRecalculation();
-        model = cppModelInput.get();
         return true;
     }
 

@@ -130,15 +130,15 @@
             <stateNode spec="beast.base.inference.parameter.RealParameter" id="deathRate" value="1.0"/>
         </state>
         <distribution id="posterior" spec="beast.base.inference.CompoundDistribution" >
-            <distribution id="birthDeath" spec="calibratedcpp.CalibratedCoalescentPointProcess" tree="@tree" conditionOnRoot="true" conditionOnCalibrations="true">
+            <distribution id="birthDeath" spec="calibratedcpp.CalibratedCoalescentPointProcess" tree="@tree" origin="3.0" conditionOnCalibrations="false">
                 <treeModel id="treeModel" spec="calibratedcpp.model.BirthDeathModel" birthRate="@birthRate" deathRate="@deathRate" rho="0.1"/>
-<!--                <calibrations spec="beast.base.evolution.speciation.CalibrationPoint" id="clade1">-->
-<!--                        <taxonset id="clade_1_taxa" spec="TaxonSet">-->
-<!--                            <taxon id="leaf_1" spec="Taxon"/>-->
-<!--                            <taxon id="leaf_2" spec="Taxon"/>-->
-<!--                        </taxonset>-->
-<!--                        <distr spec="beast.base.inference.distribution.Uniform" lower="0.99" upper="1.01"/>-->
-<!--                </calibrations>-->
+                <calibrations spec="beast.base.evolution.speciation.CalibrationPoint" id="clade1">
+                        <taxonset id="clade_1_taxa" spec="TaxonSet">
+                            <taxon id="leaf_1" spec="Taxon"/>
+                            <taxon id="leaf_2" spec="Taxon"/>
+                        </taxonset>
+                        <distr spec="beast.base.inference.distribution.Uniform" lower="0.99" upper="1.01"/>
+                </calibrations>
                 <calibrations spec="beast.base.evolution.speciation.CalibrationPoint" id="clade2">
                     <taxonset id="clade_2_taxa" spec="TaxonSet">
                             <taxon id="leaf_45" spec="Taxon"/>
@@ -177,16 +177,16 @@
                         <distr spec="beast.base.inference.distribution.Uniform" lower="1.99" upper="2.01"/>
                 </calibrations>
             </distribution>
-            <distribution id="birthRatePrior" spec="beast.base.inference.distribution.Prior" x="@birthRate">
-                <distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="10.0"/>
-            </distribution>
-            <distribution id="deathRatePrior" spec="beast.base.inference.distribution.Prior" x="@deathRate">
-                <distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="10.0"/>
-            </distribution>
+<!--            <distribution id="birthRatePrior" spec="beast.base.inference.distribution.Prior" x="@birthRate">-->
+<!--                <distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="10.0"/>-->
+<!--            </distribution>-->
+<!--            <distribution id="deathRatePrior" spec="beast.base.inference.distribution.Prior" x="@deathRate">-->
+<!--                <distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="10.0"/>-->
+<!--            </distribution>-->
         </distribution>
 
-        <operator id="birthRateScaler" spec="ScaleOperator" scaleFactor=".75" weight="1" parameter="@birthRate"/>
-        <operator id="deathRateScaler" spec="ScaleOperator" scaleFactor=".75" weight="1" parameter="@deathRate"/>
+<!--        <operator id="birthRateScaler" spec="ScaleOperator" scaleFactor=".75" weight="1" parameter="@birthRate"/>-->
+<!--        <operator id="deathRateScaler" spec="ScaleOperator" scaleFactor=".75" weight="1" parameter="@deathRate"/>-->
         <operator id='treeScaler_root' spec='ScaleOperator' scaleFactor=".75" weight="2" tree="@tree" degreesOfFreedom="1" scaleAllIndependently="false" rootOnly='true'/>
         <operator id='treeScaler' spec='ScaleOperator' scaleFactor=".9" weight="20" tree="@tree"/>
         <operator id="uniform" spec='Uniform' weight="40" tree="@tree"/>
