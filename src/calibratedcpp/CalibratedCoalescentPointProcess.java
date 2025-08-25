@@ -301,9 +301,9 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
     private Node findMRCA(List<Node> nodes) {
         if (nodes == null || nodes.isEmpty()) return null;
-        if (nodes.size() == 1) return nodes.get(0);
+        if (nodes.size() == 1) return nodes.getFirst();
 
-        Node mrca = nodes.get(0);
+        Node mrca = nodes.getFirst();
 
         for (int i = 1; i < nodes.size(); i++) {
             mrca = findMRCA(mrca, nodes.get(i));
@@ -431,7 +431,17 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     public void updateModel(TreeInterface tree) {
         model = cppModelInput.get();
         origin = (originInput.get() != null) ? originInput.get().getValue() : null;
-        maxTime = (conditionOnRoot) ? tree.getRoot().getHeight() : originInput.get().getValue();
+        maxTime = (conditionOnRoot) ? tree.getRoot().getHeight() : origin;
+
+        calibrations = new ArrayList<>(calibrationsInput.get());
+        conditionOnCalibrations = (!calibrations.isEmpty()) ? conditionOnCalibrationsInput.get() : false;
+
+        if (conditionOnCalibrations) {
+            calibrations = postOrderTopologicalSort(tree, calibrations);
+            calibrationGraph = buildNestingDAG(calibrations, tree);
+        } else {
+            calibrationGraph = new HashMap<>();
+        }
     }
 
     @Override
