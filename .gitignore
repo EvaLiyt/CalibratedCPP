@@ -4,6 +4,7 @@ out/
 !**/src/test/**/out/
 .idea
 META-INF/
+*.iml
 
 ### Eclipse ###
 .apt_generated
