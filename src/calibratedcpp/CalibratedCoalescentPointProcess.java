@@ -301,9 +301,9 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
     private Node findMRCA(List<Node> nodes) {
         if (nodes == null || nodes.isEmpty()) return null;
-        if (nodes.size() == 1) return nodes.getFirst();
+        if (nodes.size() == 1) return nodes.get(0);
 
-        Node mrca = nodes.getFirst();
+        Node mrca = nodes.get(0);
 
         for (int i = 1; i < nodes.size(); i++) {
             mrca = findMRCA(mrca, nodes.get(i));
