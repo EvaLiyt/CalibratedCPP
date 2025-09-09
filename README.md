@@ -1,4 +1,4 @@
-# CalibratedCPP_BEAST
+# CalibratedCPP
 Implementation of the Calibrated Coalescent Point Process (Calibrated CPP) in BEAST2.
 
 The CPP is a model of ultrametric trees where node ages are i.i.d. random variables. This captures a general class of birth-death processes with time-dependent birth and death rates (as in BDSKY) and age dependent death rates.
