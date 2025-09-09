@@ -159,11 +159,17 @@ class CalibratedCoalescentPointProcessTest {
         List<CalibrationPoint> sorted = cpp.postOrderTopologicalSort(tree, calibrations);
 
         int indexABC = sorted.indexOf(cpABC);
-//        int indexAB = sorted.indexOf(cpAB);
-//        int indexAC = sorted.indexOf(cpAC);
+        int indexABCDE = sorted.indexOf(cpABCDE);
+        int indexHIJ = sorted.indexOf(cpHIJ);
+        int indexHI = sorted.indexOf(cpHI);
+        int indexFGHIJ = sorted.indexOf(cpFGHIJ);
+        int indexDE = sorted.indexOf(cpDE);
 
         // Children must come before parent
-//        assertTrue(indexAB < indexABC, "cpAB should come before cpABC");
-//        assertTrue(indexAC < indexABC, "cpAC should come before cpABC");
+        assertTrue(indexABC < indexABCDE, "cpAB should come before cpABC");
+        assertTrue(indexDE < indexABCDE, "cDE should come before cpABCDE");
+        assertTrue(indexDE > indexABC, "cDE should come before cpABC");
+        assertTrue(indexHI < indexHIJ, "cpAC should come before cpABC");
+        assertTrue(indexFGHIJ > indexABCDE, "cpFGHIJ should come before cpABCDE");
     }
 }
