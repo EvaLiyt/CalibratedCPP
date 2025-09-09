@@ -5,6 +5,10 @@ import beast.base.core.Input;
 import beast.base.inference.Distribution;
 import beast.base.inference.parameter.RealParameter;
 
+/**
+ * @author Marcus Overwater
+ */
+
 @Description("This gives the node age distribution and density of an age dependent binary branching process" +
         "where individuals share some time dependent lifetime distribution and give birth at a piecewise constant rate.")
 public class AgeDependentModel extends CoalescentPointProcessModel {

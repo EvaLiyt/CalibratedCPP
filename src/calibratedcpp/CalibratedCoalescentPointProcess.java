@@ -164,8 +164,8 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         Node mrca = getMRCA(tree, calibration.taxa().asStringList());
         double cladeHeight = mrca.getHeight();
         int cladeSize = calibration.taxa().getTaxonSet().size();
-        double logQ_t = model.calculateLogCDF(cladeHeight);
 
+        double logQ_t = model.calculateLogCDF(cladeHeight);
         double logDensity = model.calculateLogDensity(cladeHeight);
 
         if (children.isEmpty()) {
@@ -211,10 +211,11 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
     @Override
     public double calculateTreeLogLikelihood(TreeInterface tree) {
-        if (originInput.get().getValue() < tree.getRoot().getHeight()) {
+        updateModel(tree);
+        if(!conditionOnRoot && origin < rootAge) {
             return Double.NEGATIVE_INFINITY;
         }
-        updateModel(tree);
+
         logP = 0.0;
         for (CalibrationPoint c : calibrations) {
             Node mrca = getMRCA(tree, c.taxa().asStringList());
@@ -224,9 +225,6 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
             if (!mrcaLeafIDs.equals(calibrationTaxa)) {
                 return Double.NEGATIVE_INFINITY; // Calibration clade is not monophyletic
-            }
-            else {
-                logP += c.dist().logDensity(mrca.getHeight());
             }
         }
         logP += calculateUnConditionedTreeLogLikelihood(tree);
@@ -365,7 +363,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         return a + Math.log1p(-Math.exp(b - a));
     }
 
-    private boolean isNested(CalibrationPoint inner, CalibrationPoint outer, TreeInterface tree) {
+    protected boolean isNested(CalibrationPoint inner, CalibrationPoint outer, TreeInterface tree) {
         Node innerMRCA = getMRCA(tree, inner.taxa().asStringList());
         Node outerMRCA = getMRCA(tree, outer.taxa().asStringList());
         return isDescendant(innerMRCA, outerMRCA);
@@ -379,21 +377,37 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         return false;
     }
 
-    private Map<CalibrationPoint, List<CalibrationPoint>> buildNestingDAG(List<CalibrationPoint> calibrations, TreeInterface tree) {
+    protected Map<CalibrationPoint, List<CalibrationPoint>> buildNestingDAG(List<CalibrationPoint> calibrations, TreeInterface tree) {
         Map<CalibrationPoint, List<CalibrationPoint>> graph = new HashMap<>();
-        for (CalibrationPoint c1 : calibrations) {
-            graph.putIfAbsent(c1, new ArrayList<>());
-            for (CalibrationPoint c2 : calibrations) {
-                if (c1 == c2) continue;
-                if (isNested(c2, c1, tree)) {
-                    graph.get(c1).add(c2);  // c1 contains c2
+
+        // Initialize adjacency list
+        for (CalibrationPoint c : calibrations) {
+            graph.put(c, new ArrayList<>());
+        }
+
+        for (CalibrationPoint parent : calibrations) {
+            for (CalibrationPoint child : calibrations) {
+                if (parent == child) continue;
+                if (isNested(child, parent, tree)) {
+                    // Check if there is no intermediate calibration between parent and child
+                    boolean hasIntermediate = false;
+                    for (CalibrationPoint other : calibrations) {
+                        if (other != parent && other != child &&
+                                isNested(child, other, tree) && isNested(other, parent, tree)) {
+                            hasIntermediate = true;
+                            break;
+                        }
+                    }
+                    if (!hasIntermediate) {
+                        graph.get(parent).add(child);
+                    }
                 }
             }
         }
         return graph;
     }
 
-    private List<CalibrationPoint> postOrderTopologicalSort(TreeInterface tree, List<CalibrationPoint> calibrations) {
+    protected List<CalibrationPoint> postOrderTopologicalSort(TreeInterface tree, List<CalibrationPoint> calibrations) {
         Map<CalibrationPoint, List<CalibrationPoint>> graph = buildNestingDAG(calibrations, tree);
         List<CalibrationPoint> sorted = new ArrayList<>();
         Set<CalibrationPoint> visited = new HashSet<>();
@@ -431,7 +445,8 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     public void updateModel(TreeInterface tree) {
         model = cppModelInput.get();
         origin = (originInput.get() != null) ? originInput.get().getValue() : null;
-        maxTime = (conditionOnRoot) ? tree.getRoot().getHeight() : origin;
+        rootAge = tree.getRoot().getHeight();
+        maxTime = (conditionOnRoot) ? rootAge : origin;
 
         calibrations = new ArrayList<>(calibrationsInput.get());
         conditionOnCalibrations = (!calibrations.isEmpty()) ? conditionOnCalibrationsInput.get() : false;
