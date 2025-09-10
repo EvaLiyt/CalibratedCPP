@@ -6,9 +6,9 @@ The CPP is a model of ultrametric trees where node ages are i.i.d. random variab
 - Individuals give birth to new individuals at a rate $\lambda(t)$ depending only on time.
 
 [Lambert and Stadler (2012)](https://doi.org/10.1016/j.tpb.2013.10.002) show that these models give a uniform distribution over ranked labelled (or oriented) tree topoligies, and that the node ages are i.i.d. random variables. The node age density where $\lambda=\lambda(t)$ and $\mu=\mu(x,t)$ and each individual is sampled with probability $rho$ is,
-$$q(t) = \frac{\rho\lambda (\lambda-\mu)e^{-(\lambda-\mu)}{\rho\lambda+(\lambda(1-\rho)-\mu)e^{-(\lambda-\mu)t}}$$
+$$q(t) = \frac{\rho\lambda (\lambda-\mu)e^{-(\lambda-\mu)}}{\rho\lambda+(\lambda(1-\rho)-\mu)e^{-(\lambda-\mu)t}}$$
 the cumulative distribution function is,
-$$\frac{\rho\lambda(1-e^{-(\lambda-\mu)t})}{\rho\lambda+(\lambda(1-\rho)-\mu)e^{(\lambda-\mu)t}}.$$
+$$F(t) = \frac{\rho\lambda(1-e^{-(\lambda-\mu)t})}{\rho\lambda+(\lambda(1-\rho)-\mu)e^{(\lambda-\mu)t}}.$$
 
 ## Structure
 
@@ -17,4 +17,5 @@ The abstract class CoalescentPointProcessModel has abstract methods for the dens
 BirthDeathModel extends CoalescentPointProcessModel with node age density and CDF for the birth-death process.
 
 CalibratedCoalescentPointProcess extends SpeciesTreeDistribution and takes a CoalescentPointProcessModel and a list of calibrations, and the origin age OR conditionOnRoot as input.
+
 
