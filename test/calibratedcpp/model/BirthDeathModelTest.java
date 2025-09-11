@@ -15,19 +15,13 @@ class BirthDeathModelTest {
     @BeforeEach
     public void setup() {
         birthDeathModelSuperCrit = new BirthDeathModel();
-        birthDeathModelSuperCrit.initByName("birthRate", new RealParameter("2.0"),
-                "deathRate", new RealParameter("1.0"),
-                "rho", new RealParameter("0.1"));
+        birthDeathModelSuperCrit.initByName("birthRate", new RealParameter("2.0"), "deathRate", new RealParameter("1.0"), "rho", new RealParameter("0.1"));
 
         birthDeathModelSubCrit = new BirthDeathModel();
-        birthDeathModelSubCrit.initByName("birthRate", new RealParameter("1.0"),
-                "deathRate", new RealParameter("2.0"),
-                "rho", new RealParameter("0.1"));
+        birthDeathModelSubCrit.initByName("birthRate", new RealParameter("1.0"), "deathRate", new RealParameter("2.0"), "rho", new RealParameter("0.1"));
 
         birthDeathModelCrit = new BirthDeathModel();
-        birthDeathModelCrit.initByName("birthRate", new RealParameter("1.0"),
-                "diversificationRate", new RealParameter("0.0"),
-                "rho", new RealParameter("1.0"));
+        birthDeathModelCrit.initByName("birthRate", new RealParameter("1.0"), "diversificationRate", new RealParameter("0.0"), "rho", new RealParameter("1.0"));
     }
 
     @Test

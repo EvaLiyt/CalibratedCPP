@@ -11,10 +11,10 @@ import beast.base.inference.parameter.RealParameter;
 @Description("Node age distribution for the CPP representation of the birth-death process")
 public class BirthDeathModel extends CoalescentPointProcessModel {
     public Input<RealParameter> birthRateInput =
-            new Input<>("birthRate","The birth rate (lambda)", (RealParameter) null);
+            new Input<>("birthRate", "The birth rate (lambda)", (RealParameter) null);
 
     public Input<RealParameter> deathRateInput =
-            new Input<>("deathRate","The death rate (mu)", (RealParameter) null);
+            new Input<>("deathRate", "The death rate (mu)", (RealParameter) null);
 
     public Input<RealParameter> diversificationRateInput =
             new Input<>("diversificationRate", "Diversification rate (lambda - mu)", (RealParameter) null);
@@ -26,7 +26,7 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
             new Input<>("turnover", "Turnover (mu / lambda)", (RealParameter) null);
 
     public Input<RealParameter> rhoInput =
-            new Input<>("rho","Probability with which each individual in the population is sampled.", (RealParameter) null);
+            new Input<>("rho", "Probability with which each individual in the population is sampled.", (RealParameter) null);
 
     public Double birthRate;
     public Double deathRate;
@@ -56,12 +56,12 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
         rho = safeGet(rhoInput);
 
         int specified = 0;
-        for (Double i : new Double[] {birthRate, deathRate, diversificationRate, reproductiveNumber, turnover}) {
+        for (Double i : new Double[]{birthRate, deathRate, diversificationRate, reproductiveNumber, turnover}) {
             if (i != null) specified++;
         }
 
         if (rho == null) {
-           throw new IllegalArgumentException("rho parameter must be specified.");
+            throw new IllegalArgumentException("rho parameter must be specified.");
         }
 
         if (specified != 2) {
@@ -73,11 +73,11 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
             throw new IllegalArgumentException("Cannot specify both reproductiveNumber and turnover together.");
         }
 
-       updateParameters();
+        updateParameters();
     }
 
     @Override
-    public double calculateLogDensity(double time){
+    public double calculateLogDensity(double time) {
         updateParameters();
         double logDensity;
         double rt = diversificationRate * time;
@@ -85,43 +85,41 @@ public class BirthDeathModel extends CoalescentPointProcessModel {
         if (isCritical) {
             // Critical case
             logDensity = logRho + logBirthRate - 2 * Math.log1p(A * time);
+        } else if (diversificationRate < 0) {
+            // Sub-critical case: use stable form with exp(r * t)
+            logDensity = logRho + logBirthRate + 2 * logDiversificationRate + rt
+                    - 2 * Math.log(Math.abs(A * Math.exp(rt) + B));
+        } else {
+            // Supercritical case: formula with exp(-r * t)
+            logDensity = logRho + logBirthRate + 2 * logDiversificationRate - rt
+                    - 2 * Math.log(A + B * Math.exp(-rt));
         }
-        else if (diversificationRate < 0) {
-                // Sub-critical case: use stable form with exp(r * t)
-                logDensity = logRho + logBirthRate + 2 * logDiversificationRate + rt
-                        - 2 * Math.log(Math.abs(A * Math.exp(rt) + B));
-            } else {
-                // Supercritical case: formula with exp(-r * t)
-                logDensity = logRho + logBirthRate + 2 * logDiversificationRate - rt
-                        - 2 * Math.log(A + B * Math.exp(-rt));
-            }
         return logDensity;
     }
 
     @Override
-    public double calculateLogCDF(double time){
+    public double calculateLogCDF(double time) {
         updateParameters();
         double logCDF;
 
         if (isCritical) {
             // Critical case
             logCDF = logRho + logBirthRate + Math.log(time) - Math.log1p(A * time);
+        } else if (diversificationRate < 0) {
+            // Sub-critical case
+            double exp_rt = Math.exp(diversificationRate * time); // decays, stable
+
+            logCDF = logRho + logBirthRate
+                    + Math.log1p(-exp_rt)     // log(1 - exp(r * t)) stable for r<0
+                    - Math.log(-A * exp_rt - B);
+        } else {
+            // Supercritical case
+            double exp_neg_rt = Math.exp(-diversificationRate * time);
+
+            logCDF = logRho + logBirthRate
+                    + Math.log1p(-exp_neg_rt)  // log(1 - exp(-r * t)) stable for r>=0
+                    - Math.log(A + B * exp_neg_rt);
         }
-        else if (diversificationRate < 0) {
-                // Sub-critical case
-                double exp_rt = Math.exp(diversificationRate * time); // decays, stable
-
-                logCDF = logRho + logBirthRate
-                        + Math.log1p(-exp_rt)     // log(1 - exp(r * t)) stable for r<0
-                        - Math.log(- A * exp_rt - B);
-            } else {
-                // Supercritical case
-                double exp_neg_rt = Math.exp(-diversificationRate * time);
-
-                logCDF = logRho + logBirthRate
-                        + Math.log1p(-exp_neg_rt)  // log(1 - exp(-r * t)) stable for r>=0
-                        - Math.log(A + B * exp_neg_rt);
-            }
         return logCDF;
     }
 

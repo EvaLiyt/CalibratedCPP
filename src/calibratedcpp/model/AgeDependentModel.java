@@ -13,10 +13,10 @@ import beast.base.inference.parameter.RealParameter;
         "where individuals share some time dependent lifetime distribution and give birth at a piecewise constant rate.")
 public class AgeDependentModel extends CoalescentPointProcessModel {
     public Input<Distribution> lifetimeDistributionInput =
-            new Input<>("lifetimeDistribution","distribution of the lifetime of an individual",(Distribution) null);
+            new Input<>("lifetimeDistribution", "distribution of the lifetime of an individual", (Distribution) null);
 
     public Input<RealParameter> birthRateInput =
-            new Input<>("birthRate","the rate at which individuals give birth",(RealParameter) null);
+            new Input<>("birthRate", "the rate at which individuals give birth", (RealParameter) null);
 
     protected double birthRate;
     protected Distribution lifetimeDistribution;

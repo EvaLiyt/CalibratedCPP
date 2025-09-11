@@ -37,10 +37,10 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
             new Input<>("treeModel", "The tree model", (CoalescentPointProcessModel) null);
 
     public Input<List<CalibrationPoint>> calibrationsInput =
-            new Input<>("calibrations","Clade calibrations", new ArrayList<>());
+            new Input<>("calibrations", "Clade calibrations", new ArrayList<>());
 
     public Input<Boolean> conditionOnCalibrationsInput =
-            new Input<>("conditionOnCalibrations","Boolean if the likelihood is conditioned on the clade calibrations (Default: true). " +
+            new Input<>("conditionOnCalibrations", "Boolean if the likelihood is conditioned on the clade calibrations (Default: true). " +
                     "For large trees with many calibrations it is recommended to set this to false and use the exchange operator.", true);
 
     protected TreeInterface tree;
@@ -98,7 +98,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
             logP += logP - model.calculateLogDensity(rootAge);
         }
 
-        for (Node node : tree.getInternalNodes()){
+        for (Node node : tree.getInternalNodes()) {
             double age = node.getHeight();
             logP += model.calculateLogDensity(age);
         }
@@ -186,7 +186,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         double[] childCDFs = new double[numChildren];
 
         for (int i = 0; i < numChildren; i++) {
-            CalibrationPoint child = children.get(i); // TODO: check the indexing of the children -- should be oldest to youngest
+            CalibrationPoint child = children.get(i);
             logChildDensities[i] = calculateLogDensityOfSingleCalibration(tree, child, calibrationGraph);
             childCladeSizes[i] = child.taxa().getTaxonSet().size();
             childCDFs[i] = model.calculateLogCDF(getMRCA(tree, child.taxa().asStringList()).getHeight());
@@ -199,7 +199,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         double logPermutationSum = 0.0;
 
-        for(int rootLocation = 1; rootLocation < cladeSize - sum(childCladeSizes) + numChildren; rootLocation++){
+        for (int rootLocation = 1; rootLocation < cladeSize - sum(childCladeSizes) + numChildren; rootLocation++) {
             logPermutationSum += calculateLogSumOfPermutationsWithRoot(
                     numChildren,
                     sum(childCladeSizes),
@@ -207,7 +207,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
                     logQ_t,
                     logDiff,
                     rootLocation
-                    );
+            );
         }
 
         double childrenTerm = 0.0;
@@ -222,7 +222,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
     @Override
     public double calculateTreeLogLikelihood(TreeInterface tree) {
         updateModel(tree);
-        if(!conditionOnRoot && origin < rootAge) {
+        if (!conditionOnRoot && origin < rootAge) {
             return Double.NEGATIVE_INFINITY;
         }
 
@@ -508,7 +508,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         result.add(current); // Post-order: visit after children
     }
 
-    private int sum(int[] values){
+    private int sum(int[] values) {
         int output = 0;
         for (int val : values) output += val;
         return output;
@@ -537,7 +537,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         return true;
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         Tree tree = new TreeParser();
         tree.initByName("newick", "((A:2,B:2):1,C:3):0;",
                 "adjustTipHeights", false,
@@ -557,7 +557,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         cpp.initByName("tree", tree,
                 "treeModel", birthDeath,
                 "origin", new RealParameter("4.0")
-                );
+        );
         System.out.println("tree = " + tree);
         System.out.println("isCritical = " + b);
         System.out.println("logP = " + cpp.calculateLogP());

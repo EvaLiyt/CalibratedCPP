@@ -11,5 +11,6 @@ import beast.base.inference.CalculationNode;
 @Description("Abstract class for the distribution of node ages in a CPP")
 public abstract class CoalescentPointProcessModel extends CalculationNode {
     public abstract double calculateLogDensity(double time);
+
     public abstract double calculateLogCDF(double time);
 }
