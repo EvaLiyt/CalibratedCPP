@@ -124,6 +124,7 @@ class CalibratedCoalescentPointProcessTest {
 
     @Test
     void calculateUnConditionedTreeLogLikelihood() {
+        assertEquals(-25.05062, cpp.calculateUnConditionedTreeLogLikelihood(tree), 1e-4, "Unconditioned density of the tree is incorrect.");
     }
 
     @Test
@@ -165,11 +166,24 @@ class CalibratedCoalescentPointProcessTest {
 
     @Test
     void calculateTreeLogLikelihood() {
-        assertEquals(-25.05062, cpp.calculateUnConditionedTreeLogLikelihood(tree), 1e-4, "Unconditioned density of the tree is incorrect.");
+        cpp = new CalibratedCoalescentPointProcess();
+        cpp.initByName("tree", tree,
+                "origin", new RealParameter("6.5"),
+                "calibrations", calibrations,
+                "treeModel", birthDeath);
+
+        assertEquals(-25.05062 - // uncoditioned tree density
+                        (birthDeath.calculateLogDensity(5.0) + birthDeath.calculateLogDensity(2.5) + birthDeath.calculateLogDensity(0.5) + Math.log(2.0) +
+                                Math.log(4 * (Math.exp(birthDeath.calculateLogCDF(5.0)) - Math.exp(birthDeath.calculateLogCDF(2.5))) + 2 * Math.exp(birthDeath.calculateLogCDF(5.0))) + // density of FGHIJ
+                                birthDeath.calculateLogDensity(4.0) + birthDeath.calculateLogDensity(3.0) + birthDeath.calculateLogDensity(1.5) + birthDeath.calculateLogCDF(3.0) + Math.log(2.0) + Math.log(2.0) + // density of ABCDE
+                                Math.log(2.0) + // number of ways to arrange the clades
+                                Math.log(Math.exp(birthDeath.calculateLogCDF(cpp.origin)) - Math.exp(birthDeath.calculateLogCDF(5.0))) + Math.log1p(-Math.exp(birthDeath.calculateLogCDF(6.5)))), // distribution of the free node age and the terminating node age > origin,
+                cpp.calculateTreeLogLikelihood(tree), 1e-4, "Tree log likelihood incorrect.");
+
     }
 
     @Test
-    void testIsNested() {
+    void isNested() {
         assertTrue(cpp.isNested(cpABC, cpABCDE, tree), "A,B should be nested inside A,B,C");
         assertTrue(cpp.isNested(cpHI, cpFGHIJ, tree), "HI should be nested inside F,G,H,I,J");
 
@@ -180,7 +194,7 @@ class CalibratedCoalescentPointProcessTest {
 
 
     @Test
-    void testBuildNestingDAG() {
+    void buildNestingDAG() {
         List<CalibrationPoint> calibrations = Arrays.asList(cpABC, cpABCDE, cpDE, cpFGHIJ, cpHI, cpHIJ);
         Map<CalibrationPoint, List<CalibrationPoint>> graph = cpp.buildNestingDAG(calibrations, tree);
 
@@ -198,7 +212,7 @@ class CalibratedCoalescentPointProcessTest {
     }
 
     @Test
-    void testPostOrderTopologicalSort() {
+    void postOrderTopologicalSort() {
         List<CalibrationPoint> calibrations = Arrays.asList(cpABC, cpABCDE, cpDE, cpFGHIJ, cpHI, cpHIJ);
         List<CalibrationPoint> sorted = cpp.postOrderTopologicalSort(tree, calibrations);
 

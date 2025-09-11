@@ -118,6 +118,14 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         Set<CalibrationPoint> roots = new HashSet<>(calibrations);
         roots.removeAll(children); // Now only root calibrations remain
 
+        // Step 2b: Sort roots by clade height (oldest first)
+        List<CalibrationPoint> sortedRoots = new ArrayList<>(roots);
+        sortedRoots.sort((c1, c2) -> {
+            double h1 = getMRCA(tree, c1.taxa().asStringList()).getHeight();
+            double h2 = getMRCA(tree, c2.taxa().asStringList()).getHeight();
+            return Double.compare(h2, h1); // descending: oldest first
+        });
+
         // Step 3: Compute log density for each root (recursively handles children)
         int numMaxCalibrations = roots.size();
 
@@ -125,12 +133,11 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         int[] cladeSizes = new int[numMaxCalibrations];
         int sumCladeSizes = 0;
 
-        int index = 0;
-
         double[] logQti = new double[numMaxCalibrations];
         double[] logDiff = new double[numMaxCalibrations];
 
-        for (CalibrationPoint root : roots) {
+        int index = 0;
+        for (CalibrationPoint root : sortedRoots) {
             marginalDensity += calculateLogDensityOfSingleCalibration(tree, root, calibrationGraph);
 
             calibrationAges[index] = getMRCA(tree, root.taxa().asStringList()).getHeight();
@@ -142,6 +149,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
             index++;
         }
+
 
         marginalDensity += calculateLogSumOfPermutations(numMaxCalibrations, sumCladeSizes, numTaxa, logQt, logDiff);
 
