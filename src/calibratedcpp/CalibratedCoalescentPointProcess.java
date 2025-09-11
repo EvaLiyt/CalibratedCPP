@@ -12,14 +12,7 @@ import beast.base.inference.parameter.RealParameter;
 import calibratedcpp.model.BirthDeathModel;
 import calibratedcpp.model.CoalescentPointProcessModel;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Collections;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Marcus Overwater
@@ -197,10 +190,11 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
             logDiff[i] = logDiffExp(logQ_t, childCDFs[i]);
         }
 
-        double logPermutationSum = 0.0;
-
-        for (int rootLocation = 1; rootLocation < cladeSize - sum(childCladeSizes) + numChildren; rootLocation++) {
-            logPermutationSum += calculateLogSumOfPermutationsWithRoot(
+        double logPermutationSum;
+        int numRootLocations = cladeSize - sum(childCladeSizes) + numChildren - 1;
+        List<Double> perRootLogs = new ArrayList<>();
+        for (int rootLocation = 1; rootLocation < numRootLocations + 1; rootLocation++) {
+            double val = calculateLogSumOfPermutationsWithRoot(
                     numChildren,
                     sum(childCladeSizes),
                     cladeSize,
@@ -208,7 +202,10 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
                     logDiff,
                     rootLocation
             );
+            perRootLogs.add(val);
         }
+
+        logPermutationSum = logSumExp(perRootLogs);
 
         double childrenTerm = 0.0;
         for (double logD : logChildDensities) {
@@ -307,9 +304,8 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         List<Double> logTerms = new ArrayList<>();
 
-        double logTerm = 0;
-
         for (List<Integer> perm : permutations) {
+            double logTerm = 0;
             int sum_s = 0;
             int[] s = new int[numCalibrations];
 

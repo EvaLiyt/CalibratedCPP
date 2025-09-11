@@ -128,6 +128,9 @@ class CalibratedCoalescentPointProcessTest {
 
     @Test
     void calculateLogMarginalDensityOfCalibrations() {
+//        assertEquals(birthDeath.calculateLogDensity(4.0) + birthDeath.calculateLogDensity(3.0) +
+//                birthDeath.calculateLogDensity(1.5) + birthDeath.calculateLogDensity(5.0 ) + birthDeath.calculateLogDensity(2.5) +
+//                birthDeath.calculateLogDensity(0.5) + birthDeath.calculateLogCDF(3.0) + birthDeath.calculateLogCDF(5.0), );
     }
 
     @Test
@@ -150,6 +153,9 @@ class CalibratedCoalescentPointProcessTest {
                 cpp.calculateLogDensityOfSingleCalibration(tree, cpHIJ, calibrationGraph), 1e-6, "Density for calibration HIJ is incorrect.");
         assertEquals(birthDeath.calculateLogDensity(4.0) + birthDeath.calculateLogDensity(3.0) + birthDeath.calculateLogDensity(1.5) + birthDeath.calculateLogCDF(3.0) + Math.log(2.0) + Math.log(2.0),
                 cpp.calculateLogDensityOfSingleCalibration(tree, cpABCDE, calibrationGraph), 1e-6, "Density for calibration ABCDE is incorrect.");
+        assertEquals(birthDeath.calculateLogDensity(5.0) + birthDeath.calculateLogDensity(2.5) + birthDeath.calculateLogDensity(0.5) + Math.log(2.0) +
+                Math.log(4 * (Math.exp(birthDeath.calculateLogCDF(5.0)) - Math.exp(birthDeath.calculateLogCDF(2.5))) + 2 * Math.exp(birthDeath.calculateLogCDF(5.0))),
+                cpp.calculateLogDensityOfSingleCalibration(tree, cpFGHIJ, calibrationGraph), 1e-6, "Density for calibration FGHIJ is incorrect.");
     }
 
     @Test
