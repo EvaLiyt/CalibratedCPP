@@ -128,9 +128,14 @@ class CalibratedCoalescentPointProcessTest {
 
     @Test
     void calculateLogMarginalDensityOfCalibrations() {
-//        assertEquals(birthDeath.calculateLogDensity(4.0) + birthDeath.calculateLogDensity(3.0) +
-//                birthDeath.calculateLogDensity(1.5) + birthDeath.calculateLogDensity(5.0 ) + birthDeath.calculateLogDensity(2.5) +
-//                birthDeath.calculateLogDensity(0.5) + birthDeath.calculateLogCDF(3.0) + birthDeath.calculateLogCDF(5.0), );
+        Map<CalibrationPoint, List<CalibrationPoint>> calibrationGraph = cpp.buildNestingDAG(calibrations, tree);
+
+        assertEquals(birthDeath.calculateLogDensity(5.0) + birthDeath.calculateLogDensity(2.5) + birthDeath.calculateLogDensity(0.5) + Math.log(2.0) +
+                        Math.log(4 * (Math.exp(birthDeath.calculateLogCDF(5.0)) - Math.exp(birthDeath.calculateLogCDF(2.5))) + 2 * Math.exp(birthDeath.calculateLogCDF(5.0))) + // density of FGHIJ
+                        birthDeath.calculateLogDensity(4.0) + birthDeath.calculateLogDensity(3.0) + birthDeath.calculateLogDensity(1.5) + birthDeath.calculateLogCDF(3.0) + Math.log(2.0) + Math.log(2.0) + // density of ABCDE
+                        Math.log(2.0) + // number of ways to arrange the clades
+                        Math.log(Math.exp(birthDeath.calculateLogCDF(cpp.origin)) - Math.exp(birthDeath.calculateLogCDF(5.0))) + Math.log1p(-Math.exp(birthDeath.calculateLogCDF(6.5))), // distribution of the free node age and the terminating node age > origin
+                cpp.calculateLogMarginalDensityOfCalibrations(tree, calibrations, calibrationGraph));
     }
 
     @Test
@@ -140,9 +145,9 @@ class CalibratedCoalescentPointProcessTest {
         assertEquals(birthDeath.calculateLogDensity(3.0) + birthDeath.calculateLogCDF(3.0) + Math.log(2.0),
                 cpp.calculateLogDensityOfSingleCalibration(tree, cpABC, cpp.calibrationGraph), 1e-6, "Density for calibration ABC is incorrect.");
         assertEquals(birthDeath.calculateLogDensity(2.5) + birthDeath.calculateLogCDF(2.5) + Math.log(2.0),
-                cpp.calculateLogDensityOfSingleCalibration(tree, cpHIJ, cpp.calibrationGraph), 1e-6, "Density for calibration HIJ is incorrect."); // need to account for number of ways of arranging the nodes in the clade
+                cpp.calculateLogDensityOfSingleCalibration(tree, cpHIJ, cpp.calibrationGraph), 1e-6, "Density for calibration HIJ is incorrect.");
         assertEquals(3 * birthDeath.calculateLogCDF(4.0) + birthDeath.calculateLogDensity(4.0) + Math.log(4.0),
-                cpp.calculateLogDensityOfSingleCalibration(tree, cpABCDE, cpp.calibrationGraph), 1e-6, "Density for calibration ABCDE is incorrect.");  // need to account for number of ways of arranging the nodes in the clade
+                cpp.calculateLogDensityOfSingleCalibration(tree, cpABCDE, cpp.calibrationGraph), 1e-6, "Density for calibration ABCDE is incorrect.");
 
         Map<CalibrationPoint, List<CalibrationPoint>> calibrationGraph = cpp.buildNestingDAG(calibrations, tree);
 

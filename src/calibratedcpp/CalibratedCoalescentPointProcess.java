@@ -102,9 +102,9 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
                                                             List<CalibrationPoint> calibrations,
                                                             Map<CalibrationPoint, List<CalibrationPoint>> calibrationGraph) {
 
-        updateModel(tree);
+        updateModel(tree); // TODO: Implement root conditioning
         double logQt = model.calculateLogCDF(maxTime);
-        double marginalDensity = model.calculateLogDensity(maxTime) + Math.log1p(-Math.exp(logQt));
+        double marginalDensity = logDiffExp(0.0, logQt); // terminating node age greater than maxTime
 
         int numTaxa = tree.getLeafNodeCount();
 
@@ -264,9 +264,8 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         List<Double> logTerms = new ArrayList<>();
 
-        double logTerm = 0;
-
         for (List<Integer> perm : permutations) {
+            double logTerm = 0;
             int sum_s = 0;
             int[] s = new int[numCalibrations];
 
