@@ -11,7 +11,7 @@ $$q(t) = \frac{\rho\lambda (\lambda-\mu)e^{-(\lambda-\mu)}}{\rho\lambda+(\lambda
 
 the cumulative distribution function is,
 
-$$Q(t) = \frac{\rho\lambda(1-e^{-(\lambda-\mu)t})}{\rho\lambda+(\lambda(1-\rho)-\mu)e^{(\lambda-\mu)t}}.$$
+$$Q(t) = \frac{\rho\lambda(1-e^{-(\lambda-\mu)t})}{\rho\lambda+(\lambda(1-\rho)-\mu)e^{-(\lambda-\mu)t}}.$$
 
 ## Structure
 
@@ -19,6 +19,7 @@ The implementation has the following structure:
 - The abstract class CoalescentPointProcessModel has abstract methods for the density and CDF of the node age.
 - BirthDeathModel extends CoalescentPointProcessModel with node age density and CDF for the constant rate birth-death process.
 - CalibratedCoalescentPointProcess extends SpeciesTreeDistribution and takes a CoalescentPointProcessModel, a list of calibrations, and the origin age OR conditionOnRoot as inputs.
+
 
 
 
