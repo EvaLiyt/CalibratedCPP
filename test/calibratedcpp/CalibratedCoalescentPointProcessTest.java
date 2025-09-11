@@ -138,6 +138,8 @@ class CalibratedCoalescentPointProcessTest {
 
         assertEquals(birthDeath.calculateLogDensity(2.5) + birthDeath.calculateLogDensity(0.5) + Math.log(2.0),
                 cpp.calculateLogDensityOfSingleCalibration(tree, cpHIJ, calibrationGraph), 1e-6, "Density for calibration HIJ is incorrect.");
+        assertEquals(birthDeath.calculateLogDensity(4.0) + birthDeath.calculateLogDensity(3.0) + birthDeath.calculateLogDensity(1.5) + birthDeath.calculateLogCDF(3.0) + Math.log(2.0) + Math.log(2.0),
+                cpp.calculateLogDensityOfSingleCalibration(tree, cpABCDE, calibrationGraph), 1e-6, "Density for calibration ABCDE is incorrect.");
     }
 
     @Test

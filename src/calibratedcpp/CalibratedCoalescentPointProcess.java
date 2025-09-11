@@ -324,12 +324,11 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
                 }
                 s[i] = (ell_i == 0 ? 1 : 0) + (ell_i == totalElements - 1 ? 1 : 0) + countAdj;
                 // Extra adjacency if next to root location (but not at the ends)
-                if (locationOfRoot > 0 && locationOfRoot < totalElements) {
-                    if (ell_i == locationOfRoot || ell_i == locationOfRoot - 1) {
-                        s[i]++;
-                    }
+                if (ell_i == locationOfRoot || ell_i == locationOfRoot - 1) {
+                    s[i]++;
                 }
 
+                s[i] = Math.min(s[i], 2);
                 sum_s += s[i];
 
                 logTerm += (2 - s[i]) * logDiff[i]; // Compute log term for this permutation
