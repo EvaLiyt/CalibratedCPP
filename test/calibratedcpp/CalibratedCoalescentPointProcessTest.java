@@ -1,6 +1,7 @@
 package calibratedcpp;
 
 import calibratedcpp.model.BirthDeathModel;
+import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 
 import beast.base.evolution.speciation.CalibrationPoint;
@@ -29,6 +30,7 @@ class CalibratedCoalescentPointProcessTest {
     private CalibrationPoint cpHIJ;
     private CalibrationPoint cpFGHIJ;
     private BirthDeathModel birthDeath;
+    private List<CalibrationPoint> calibrations;
 
     @BeforeEach
     public void setup() {
@@ -106,6 +108,8 @@ class CalibratedCoalescentPointProcessTest {
 
         cpFGHIJ = new CalibrationPoint();
         cpFGHIJ.initByName("taxonset", taxaFGHIJ, "distr", distHI);
+
+        calibrations = Lists.newArrayList(cpDE, cpABC, cpABCDE, cpHI, cpHIJ, cpFGHIJ);
     }
 
     @Test
@@ -118,10 +122,27 @@ class CalibratedCoalescentPointProcessTest {
 
     @Test
     void calculateLogDensityOfSingleCalibration() {
+        assertEquals(birthDeath.calculateLogDensity(0.5), cpp.calculateLogDensityOfSingleCalibration(tree, cpHI, cpp.calibrationGraph),1e-6, "Density for calibration HI is incorrect.");
+        assertEquals(birthDeath.calculateLogDensity(1.5), cpp.calculateLogDensityOfSingleCalibration(tree, cpDE, cpp.calibrationGraph), 1e-6, "Density for calibration DE is incorrect.");
+        assertEquals(birthDeath.calculateLogDensity(3.0) + birthDeath.calculateLogCDF(3.0) + Math.log(2.0),
+                cpp.calculateLogDensityOfSingleCalibration(tree, cpABC, cpp.calibrationGraph), 1e-6, "Density for calibration ABC is incorrect.");
+        assertEquals(birthDeath.calculateLogDensity(2.5) + birthDeath.calculateLogCDF(2.5) + Math.log(2.0),
+                cpp.calculateLogDensityOfSingleCalibration(tree, cpHIJ, cpp.calibrationGraph), 1e-6, "Density for calibration HIJ is incorrect."); // need to account for number of ways of arranging the nodes in the clade
+        assertEquals(3 * birthDeath.calculateLogCDF(4.0) + birthDeath.calculateLogDensity(4.0) + Math.log(4.0),
+                cpp.calculateLogDensityOfSingleCalibration(tree, cpABCDE, cpp.calibrationGraph), 1e-6, "Density for calibration ABCDE is incorrect.");  // need to account for number of ways of arranging the nodes in the clade
+
+        Map<CalibrationPoint, List<CalibrationPoint>> calibrationGraph = cpp.buildNestingDAG(calibrations, tree);
+
+        List<CalibrationPoint> children = calibrationGraph.getOrDefault(cpABCDE, new ArrayList<>());
+        assertTrue(cpABC.equals(children.get(0)), "Index of calibration ABC is incorrect.");
+
+        assertEquals(birthDeath.calculateLogDensity(2.5) + birthDeath.calculateLogDensity(0.5) + Math.log(2.0),
+                cpp.calculateLogDensityOfSingleCalibration(tree, cpHIJ, calibrationGraph), 1e-6, "Density for calibration HIJ is incorrect.");
     }
 
     @Test
     void calculateTreeLogLikelihood() {
+        assertEquals(-25.05062,cpp.calculateUnConditionedTreeLogLikelihood(tree), 1e-4, "Unconditioned density of the tree is incorrect.");
     }
 
     @Test
@@ -150,7 +171,7 @@ class CalibratedCoalescentPointProcessTest {
         assertFalse(graph.get(cpHI).contains(cpHIJ), "cpHI should not have cpHIJ as child");
 
         assertTrue(graph.get(cpABC).isEmpty(), "cpABC should have no children");
-        assertTrue(graph.get(cpHI).isEmpty(), "cpABC should have no children");
+        assertTrue(graph.get(cpHI).isEmpty(), "cpHI should have no children");
     }
 
     @Test

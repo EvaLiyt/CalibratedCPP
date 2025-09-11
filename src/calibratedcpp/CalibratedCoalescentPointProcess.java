@@ -160,6 +160,11 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
                                                          Map<CalibrationPoint, List<CalibrationPoint>> calibrationGraph) {
         updateModel(tree);
         List<CalibrationPoint> children = calibrationGraph.getOrDefault(calibration, new ArrayList<>());
+        children.sort((c1, c2) -> {
+            double h1 = getMRCA(tree, c1.taxa().asStringList()).getHeight();
+            double h2 = getMRCA(tree, c2.taxa().asStringList()).getHeight();
+            return Double.compare(h2, h1); // descending: oldest (largest height) first
+        });
 
         Node mrca = getMRCA(tree, calibration.taxa().asStringList());
         double cladeHeight = mrca.getHeight();
@@ -170,7 +175,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
 
         if (children.isEmpty()) {
             // Leaf calibration
-            logDensity += (cladeSize - 2) * logQ_t;
+            logDensity += (cladeSize - 2) * logQ_t + Math.log(cladeSize - 1);
             return logDensity;
         }
 
@@ -181,7 +186,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
         double[] childCDFs = new double[numChildren];
 
         for (int i = 0; i < numChildren; i++) {
-            CalibrationPoint child = children.get(i);
+            CalibrationPoint child = children.get(i); // TODO: check the indexing of the children -- should be oldest to youngest
             logChildDensities[i] = calculateLogDensityOfSingleCalibration(tree, child, calibrationGraph);
             childCladeSizes[i] = child.taxa().getTaxonSet().size();
             childCDFs[i] = model.calculateLogCDF(getMRCA(tree, child.taxa().asStringList()).getHeight());
@@ -192,15 +197,20 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
             logDiff[i] = logDiffExp(logQ_t, childCDFs[i]);
         }
 
-        double logPermutationSum = calculateLogSumOfPermutations(
-                numChildren,
-                sum(childCladeSizes),
-                cladeSize,
-                logQ_t,
-                logDiff
-        );
+        double logPermutationSum = 0.0;
 
-        double childrenTerm = 0;
+        for(int rootLocation = 1; rootLocation < cladeSize - sum(childCladeSizes) + numChildren; rootLocation++){
+            logPermutationSum += calculateLogSumOfPermutationsWithRoot(
+                    numChildren,
+                    sum(childCladeSizes),
+                    cladeSize,
+                    logQ_t,
+                    logDiff,
+                    rootLocation
+                    );
+        }
+
+        double childrenTerm = 0.0;
         for (double logD : logChildDensities) {
             childrenTerm += logD;
         }
@@ -279,6 +289,53 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
             }
 
             logTerm += (m - numCalibrations - 1 + sum_s) * logQ_t;
+
+            logTerms.add(logTerm);
+        }
+        // Use logSumExp to sum all terms in log space
+        return logSumExp(logTerms);
+    }
+
+    private double calculateLogSumOfPermutationsWithRoot(int numCalibrations, int sumCladeSizes, int numTaxa, double logQ_t, double[] logDiff, int locationOfRoot) {
+
+        int m = numTaxa - sumCladeSizes;
+
+        int totalElements = m + numCalibrations;
+
+        List<List<Integer>> permutations = new ArrayList<>();
+        generatePermutations(totalElements, numCalibrations, new ArrayList<>(), new boolean[totalElements], permutations);
+
+        List<Double> logTerms = new ArrayList<>();
+
+        double logTerm = 0;
+
+        for (List<Integer> perm : permutations) {
+            int sum_s = 0;
+            int[] s = new int[numCalibrations];
+
+            for (int i = 0; i < numCalibrations; i++) {
+                int ell_i = perm.get(i);
+                int countAdj = 0;
+                for (int j = 0; j < i; j++) {
+                    int ell_j = perm.get(j);
+                    if (ell_j == ell_i - 1 || ell_j == ell_i + 1) {
+                        countAdj++;
+                    }
+                }
+                s[i] = (ell_i == 0 ? 1 : 0) + (ell_i == totalElements - 1 ? 1 : 0) + countAdj;
+                // Extra adjacency if next to root location (but not at the ends)
+                if (locationOfRoot > 0 && locationOfRoot < totalElements) {
+                    if (ell_i == locationOfRoot || ell_i == locationOfRoot - 1) {
+                        s[i]++;
+                    }
+                }
+
+                sum_s += s[i];
+
+                logTerm += (2 - s[i]) * logDiff[i]; // Compute log term for this permutation
+            }
+
+            logTerm += (m - numCalibrations - 1 + sum_s - 1) * logQ_t;
 
             logTerms.add(logTerm);
         }
@@ -404,6 +461,22 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
                 }
             }
         }
+
+        // Sort children lists by MRCA height: oldest (largest height) first
+        Map<CalibrationPoint, Double> cachedHeights = new HashMap<>();
+        for (CalibrationPoint c : calibrations) {
+            Node mrca = getMRCA(tree, c.taxa().asStringList());
+            cachedHeights.put(c, (mrca == null ? Double.NEGATIVE_INFINITY : mrca.getHeight()));
+        }
+
+        for (List<CalibrationPoint> children : graph.values()) {
+            children.sort((c1, c2) -> {
+                double h1 = cachedHeights.getOrDefault(c1, Double.NEGATIVE_INFINITY);
+                double h2 = cachedHeights.getOrDefault(c2, Double.NEGATIVE_INFINITY);
+                return Double.compare(h2, h1); // descending
+            });
+        }
+
         return graph;
     }
 
