@@ -1,5 +1,5 @@
 # The Calibrated Coalescent Point Process
-[![Unit/integration tests](https://github.com/moverwater/CalibratedCPP/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/moverwater/CalibratedCPP/actions/workflows/main.yml)
+[![Unit/integration tests](https://github.com/moverwater/CalibratedCPP/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/moverwater/CalibratedCPP/actions/workflows/main.yml)
 
 This is an implementation of the Calibrated Coalescent Point Process (Calibrated CPP) in BEAST2.
 
@@ -21,6 +21,7 @@ The implementation has the following structure:
 - The abstract class CoalescentPointProcessModel has abstract methods for the density and CDF of the node age.
 - BirthDeathModel extends CoalescentPointProcessModel with node age density and CDF for the constant rate birth-death process.
 - CalibratedCoalescentPointProcess extends SpeciesTreeDistribution and takes a CoalescentPointProcessModel, a list of calibrations, and the origin age OR conditionOnRoot as inputs.
+
 
 
 
