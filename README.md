@@ -22,6 +22,12 @@ The implementation has the following structure:
 - BirthDeathModel extends CoalescentPointProcessModel with node age density and CDF for the constant rate birth-death process.
 - CalibratedCoalescentPointProcess extends SpeciesTreeDistribution and takes a CoalescentPointProcessModel, a list of calibrations, and the origin age OR conditionOnRoot as inputs.
 
+## License
+
+CalibratedCPP is free software.  It is distributed under the terms of version 3 of the GNU General Public License.  A copy of this license should be found in the file [COPYING](./COPYING) located in the root directory of this repository. If this file is absent for some reason, it can also be retrieved from
+https://www.gnu.org/licenses.
+
+
 
 
 
