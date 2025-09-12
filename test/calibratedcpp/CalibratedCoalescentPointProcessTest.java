@@ -1,9 +1,10 @@
 package calibratedcpp;
 
 import calibratedcpp.model.BirthDeathModel;
-import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.List;
 import beast.base.evolution.speciation.CalibrationPoint;
 import beast.base.evolution.tree.Tree;
 import beast.base.evolution.tree.TreeParser;
@@ -119,8 +120,7 @@ class CalibratedCoalescentPointProcessTest {
         cpFGHIJ = new CalibrationPoint();
         cpFGHIJ.initByName("taxonset", taxaFGHIJ, "distr", distHI);
 
-        calibrations = Lists.newArrayList(cpDE, cpABC, cpABCDE, cpHI, cpHIJ, cpFGHIJ);
-    }
+        calibrations = Arrays.asList(cpDE, cpABC, cpABCDE, cpHI, cpHIJ, cpFGHIJ);    }
 
     @Test
     void calculateUnConditionedTreeLogLikelihood() {

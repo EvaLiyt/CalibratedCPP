@@ -1,16 +1,10 @@
-name: Unit/Integration Tests
-
-on:
-  push:
-  pull_request:
-  workflow_dispatch:
+name: Unit/integration tests
+on: [ push, pull_request, workflow_dispatch ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Build and run Docker tests
-        run: |
-          docker build -t calibratedcpp-tests .
-          docker run --rm calibratedcpp-tests
+      - uses: actions/checkout@v2
+      - run: docker build -t tests .
+      - run: docker run tests
