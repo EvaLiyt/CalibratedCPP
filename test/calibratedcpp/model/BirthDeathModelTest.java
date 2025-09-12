@@ -1,19 +1,18 @@
 package calibratedcpp.model;
 
 import beast.base.inference.parameter.RealParameter;
+import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class BirthDeathModelTest {
+public class BirthDeathModelTest {
 
-    private BirthDeathModel birthDeathModelSuperCrit;
-    private BirthDeathModel birthDeathModelSubCrit;
-    private BirthDeathModel birthDeathModelCrit;
+    private final BirthDeathModel birthDeathModelSuperCrit;
+    private final BirthDeathModel birthDeathModelSubCrit;
+    private final BirthDeathModel birthDeathModelCrit;
 
-    @BeforeEach
-    public void setup() {
+    public BirthDeathModelTest() {
         birthDeathModelSuperCrit = new BirthDeathModel();
         birthDeathModelSuperCrit.initByName("birthRate", new RealParameter("2.0"), "deathRate", new RealParameter("1.0"), "rho", new RealParameter("0.1"));
 
@@ -25,7 +24,7 @@ class BirthDeathModelTest {
     }
 
     @Test
-    void testBirthDeathParameters() {
+    public void testBirthDeathParameters() {
         assertNotNull(birthDeathModelSuperCrit.birthRateInput.get(), "Birth rate should be initialized");
         assertNotNull(birthDeathModelSuperCrit.deathRateInput.get(), "Death rate should be initialized");
         assertEquals(2.0, birthDeathModelSuperCrit.birthRate, 1e-6, "Birth rate value incorrect");
@@ -46,7 +45,7 @@ class BirthDeathModelTest {
     }
 
     @Test
-    void calculateLogDensity() {
+    public void calculateLogDensity() {
         assertEquals(-8.390925, birthDeathModelSuperCrit.calculateLogDensity(10), 1e-4,
                 "Log density incorrect.");
         assertEquals(-3.443752, birthDeathModelSuperCrit.calculateLogDensity(5), 1e-4,
@@ -70,7 +69,7 @@ class BirthDeathModelTest {
     }
 
     @Test
-    void calculateLogCDF() {
+    public void calculateLogCDF() {
         assertEquals(0.0, birthDeathModelSuperCrit.calculateLogCDF(1e8), 1e-6,
                 "Log CDF incorrect.");
         assertEquals(Double.NEGATIVE_INFINITY, birthDeathModelSuperCrit.calculateLogCDF(0.0), 1e-6,
