@@ -102,7 +102,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
                                                             List<CalibrationPoint> calibrations,
                                                             Map<CalibrationPoint, List<CalibrationPoint>> calibrationGraph) {
 
-        updateModel(tree); // TODO: Implement root conditioning
+        updateModel(tree);
         double logQt = model.calculateLogCDF(maxTime);
         double marginalDensity = logDiffExp(0.0, logQt); // terminating node age greater than maxTime
 
@@ -150,8 +150,15 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
             index++;
         }
 
-
-        marginalDensity += calculateLogSumOfPermutations(numMaxCalibrations, sumCladeSizes, numTaxa, logQt, logDiff);
+        if (!conditionOnRoot) {
+            marginalDensity += calculateLogSumOfPermutations(numMaxCalibrations, sumCladeSizes, numTaxa, logQt, logDiff);
+        } else {
+            int numRootLocations = numTaxa - sumCladeSizes + numMaxCalibrations - 1;
+            marginalDensity += logDiffExp(0.0, logQt) + model.calculateLogDensity(maxTime);
+            for (int rootLocation = 1; rootLocation <= numRootLocations; rootLocation++) {
+                marginalDensity += calculateLogSumOfPermutationsWithRoot(numMaxCalibrations, sumCladeSizes, numTaxa, logQt, logDiff, rootLocation);
+            }
+        }
 
         return marginalDensity;
     }

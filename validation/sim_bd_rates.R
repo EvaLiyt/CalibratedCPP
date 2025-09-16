@@ -1,5 +1,5 @@
-birthRates = runif(100,0,10)
-deathRates = runif(100,0,10)
+birthRates = runif(200,0,10)
+deathRates = runif(200,0,10)
 
 birthAndDeathRates = data.frame(birthRates = birthRates,
                                 deathRates = deathRates)

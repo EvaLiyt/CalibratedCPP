@@ -4,7 +4,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --time=1:20:00
 #SBATCH --job-name="BDSKY"
-#SBATCH --array=1-100
+#SBATCH --array=1-200
 #SBATCH --mem-per-cpu=4096
 
 i=$SLURM_ARRAY_TASK_ID
