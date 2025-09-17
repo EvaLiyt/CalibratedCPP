@@ -30,6 +30,7 @@ public class CalibratedCoalescentPointProcessTest {
     private CalibrationPoint cpFGHIJ;
     private BirthDeathModel birthDeath;
     private List<CalibrationPoint> calibrations;
+    private CalibratedCoalescentPointProcess rootConditionedCPP;
 
     public CalibratedCoalescentPointProcessTest() {
         tree = new TreeParser();
@@ -47,6 +48,12 @@ public class CalibratedCoalescentPointProcessTest {
         cpp.initByName("tree", tree,
                 "treeModel", birthDeath,
                 "origin", new RealParameter("6.5")
+        );
+
+        rootConditionedCPP = new CalibratedCoalescentPointProcess();
+        rootConditionedCPP.initByName("tree", tree,
+                "treeModel", birthDeath,
+                "conditionOnRoot", true
         );
 
         // Create taxa objects
@@ -123,6 +130,10 @@ public class CalibratedCoalescentPointProcessTest {
     public void calculateUnConditionedTreeLogLikelihood() {
 
         assertEquals(-25.05062, cpp.calculateUnConditionedTreeLogLikelihood(tree), 1e-4, "Unconditioned density of the tree is incorrect.");
+        assertEquals(-25.05062 - Math.log(1 - Math.exp(birthDeath.calculateLogCDF(6.5))) + 2 * Math.log(1 - Math.exp(birthDeath.calculateLogCDF(6.0)))
+                        - birthDeath.calculateLogDensity(6.0),
+                rootConditionedCPP.calculateUnConditionedTreeLogLikelihood(tree), 1e-4, "Unconditioned density of the tree is incorrect."
+                );
     }
 
     @Test
@@ -135,6 +146,13 @@ public class CalibratedCoalescentPointProcessTest {
                         Math.log(2.0) + // number of ways to arrange the clades
                         Math.log(Math.exp(birthDeath.calculateLogCDF(cpp.origin)) - Math.exp(birthDeath.calculateLogCDF(5.0))) + Math.log1p(-Math.exp(birthDeath.calculateLogCDF(6.5))), // distribution of the free node age and the terminating node age > origin
                 cpp.calculateLogMarginalDensityOfCalibrations(tree, calibrations, calibrationGraph));
+
+        assertEquals(birthDeath.calculateLogDensity(5.0) + birthDeath.calculateLogDensity(2.5) + birthDeath.calculateLogDensity(0.5) + Math.log(2.0) +
+                Math.log(4 * (Math.exp(birthDeath.calculateLogCDF(5.0)) - Math.exp(birthDeath.calculateLogCDF(2.5))) + 2 * Math.exp(birthDeath.calculateLogCDF(5.0))) + // density of FGHIJ
+                birthDeath.calculateLogDensity(4.0) + birthDeath.calculateLogDensity(3.0) + birthDeath.calculateLogDensity(1.5) + birthDeath.calculateLogCDF(3.0) + Math.log(2.0) + Math.log(2.0) + // density of ABCDE
+                Math.log(2.0) + // number of ways to arrange the clades
+                2 * Math.log1p(-Math.exp(birthDeath.calculateLogCDF(6.0))), // two terminating heights for the two sub-trees
+                rootConditionedCPP.calculateLogMarginalDensityOfCalibrations(tree, calibrations, calibrationGraph),1e-4, "Unconditioned density of the tree is incorrect.");
     }
 
     @Test
@@ -170,7 +188,15 @@ public class CalibratedCoalescentPointProcessTest {
                 "calibrations", calibrations,
                 "treeModel", birthDeath);
 
-        assertEquals(-25.05062 - // uncoditioned tree density
+        rootConditionedCPP = new CalibratedCoalescentPointProcess();
+        rootConditionedCPP.initByName("tree", tree,
+                "origin", new RealParameter("6.5"),
+                "calibrations", calibrations,
+                "conditionOnRoot", true,
+                "conditionOnCalibrations", true,
+                "treeModel", birthDeath);
+
+        assertEquals(-25.05062 - // unconditioned tree density
                         (birthDeath.calculateLogDensity(5.0) + birthDeath.calculateLogDensity(2.5) + birthDeath.calculateLogDensity(0.5) + Math.log(2.0) +
                                 Math.log(4 * (Math.exp(birthDeath.calculateLogCDF(5.0)) - Math.exp(birthDeath.calculateLogCDF(2.5))) + 2 * Math.exp(birthDeath.calculateLogCDF(5.0))) + // density of FGHIJ
                                 birthDeath.calculateLogDensity(4.0) + birthDeath.calculateLogDensity(3.0) + birthDeath.calculateLogDensity(1.5) + birthDeath.calculateLogCDF(3.0) + Math.log(2.0) + Math.log(2.0) + // density of ABCDE
@@ -178,6 +204,12 @@ public class CalibratedCoalescentPointProcessTest {
                                 Math.log(Math.exp(birthDeath.calculateLogCDF(cpp.origin)) - Math.exp(birthDeath.calculateLogCDF(5.0))) + Math.log1p(-Math.exp(birthDeath.calculateLogCDF(6.5)))), // distribution of the free node age and the terminating node age > origin,
                 cpp.calculateTreeLogLikelihood(tree), 1e-4, "Tree log likelihood incorrect.");
 
+        assertEquals(-25.05062 - birthDeath.calculateLogDensity(6.0) - Math.log1p(-Math.exp(birthDeath.calculateLogCDF(6.5))) - // unconditioned tree density
+                        (birthDeath.calculateLogDensity(5.0) + birthDeath.calculateLogDensity(2.5) + birthDeath.calculateLogDensity(0.5) + Math.log(2.0) +
+                                Math.log(4 * (Math.exp(birthDeath.calculateLogCDF(5.0)) - Math.exp(birthDeath.calculateLogCDF(2.5))) + 2 * Math.exp(birthDeath.calculateLogCDF(5.0))) + // density of FGHIJ
+                                birthDeath.calculateLogDensity(4.0) + birthDeath.calculateLogDensity(3.0) + birthDeath.calculateLogDensity(1.5) + birthDeath.calculateLogCDF(3.0) + Math.log(2.0) + Math.log(2.0) + // density of ABCDE
+                                Math.log(2.0)), // number of ways to arrange the clades
+                rootConditionedCPP.calculateTreeLogLikelihood(tree), 1e-4, "Tree log likelihood incorrect.");
     }
 
     @Test

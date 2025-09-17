@@ -154,7 +154,7 @@ public class CalibratedCoalescentPointProcess extends SpeciesTreeDistribution {
             marginalDensity += calculateLogSumOfPermutations(numMaxCalibrations, sumCladeSizes, numTaxa, logQt, logDiff);
         } else {
             int numRootLocations = numTaxa - sumCladeSizes + numMaxCalibrations - 1;
-            marginalDensity += logDiffExp(0.0, logQt) + model.calculateLogDensity(maxTime);
+            marginalDensity += logDiffExp(0.0, logQt);
             for (int rootLocation = 1; rootLocation <= numRootLocations; rootLocation++) {
                 marginalDensity += calculateLogSumOfPermutationsWithRoot(numMaxCalibrations, sumCladeSizes, numTaxa, logQt, logDiff, rootLocation);
             }
