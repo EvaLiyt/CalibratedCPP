@@ -15,6 +15,8 @@ the cumulative distribution function is,
 
 $$Q(t) = \frac{\rho\lambda(1-e^{-(\lambda-\mu)t})}{\rho\lambda+(\lambda(1-\rho)-\mu)e^{-(\lambda-\mu)t}}.$$
 
+The Calibrated CPP is a calibrated tree prior using the CPP. Calibrated tree priors are used for molecular clock dating by conditioning on the existence and ages of the most recent common ancestors of monophyletic clades.
+
 ## Structure
 
 The implementation has the following structure:
@@ -26,6 +28,7 @@ The implementation has the following structure:
 
 CalibratedCPP is free software.  It is distributed under the terms of version 3 of the GNU General Public License.  A copy of this license should be found in the file [COPYING](./COPYING) located in the root directory of this repository. If this file is absent for some reason, it can also be retrieved from
 https://www.gnu.org/licenses.
+
 
 
 
