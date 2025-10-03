@@ -6,12 +6,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
       - run: docker build -t tests .
-      - name: test ant build for calibratdecpp-beast
-        run: docker run -w /app/calibratedcpp-beast tests ant build
-
-      - name: maven clean
-        run: mvn clean
-      - name: maven test
-        run: mvn -B test --file pom.xml
+      - run: docker run -w /app/calibratedcpp-beast tests ant build
