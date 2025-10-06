@@ -56,7 +56,7 @@ public class CalibratedCPPToBEAST implements GeneratorToBEAST<CalibratedCPPTree,
         int n = generator.getN().value();
         List<CalibrationPoint> calibrations = new ArrayList<>();
         String[][] cladeNames = generator.getCladeTaxa().value();
-        Value<Number[]> cladeAges = generator.getCladeMRCAAge();
+        Value<Number[]> cladeAges = generator.getCladeAge();
         // TODO: only support distribution generated ages, fixed values will throw error
         BasicFunction tmp = (BasicFunction) cladeAges.getInputs().get(0);
 

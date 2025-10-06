@@ -10,7 +10,7 @@ model{
 
     cladeTaxa = ["leaf_1", "leaf_2", "leaf_3"];
 
-    tree ~ CalibratedCPP(lambda=lambda, mu=0, rho=1, n=n, cladeTaxa = [cladeTaxa], cladeMRCAAge=[cladeAge], rootAge=rootAge);
+    tree ~ CalibratedCPP(lambda=lambda, mu=0, rho=1, n=n, cladeTaxa = [cladeTaxa], cladeAge=[cladeAge], rootAge=rootAge);
 
     // GTR
     π ~ Dirichlet(conc=[3.0,3.0,3.0,3.0]);
